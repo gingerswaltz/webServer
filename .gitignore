@@ -1,0 +1,15 @@
+# created by virtualenv automatically
+
+# Исключить файлы временных данных
+*.pyc
+__pycache__/
+
+# Исключить файлы проекта PyCharm
+.idea/
+
+# Исключить файлы логов
+*.log
+
+# Исключить файлы настроек
+*.cfg
+*.conf
