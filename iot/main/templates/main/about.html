@@ -1,8 +1,13 @@
 {% extends 'main/layout.html' %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'main/css/main.css' %}">
 
 {% block title %} О нас {% endblock %}
 
 {% block content %}
-    <h1>О нас</h1>
-    <p>Привет!  </p>
+    <main class="features">
+        <h1>О нас</h1>
+        <p>Привет!  </p>
+    </main>
 {% endblock %}

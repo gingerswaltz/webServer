@@ -11,23 +11,33 @@
 </head>
 <body>
     <aside>
-        <img src="{% static '' %}" alt="icon">
-        <span class="icon">webIot</span>
-        <h3>Навигация</h3>
-        <ul>
-            <a href="{% url 'home' %}"><li> <i class="fas fa-home"></i> Главная</li></a>
-            <a href="{% url 'about' %}"><li><i class="fas fa-paper-plane"></i> О нас</li></a>
-            <a href=""><li><i class="fas fa-id-card"></i> Контакты</li></a>
-        </ul>
+         <div class="icon-container">
+<img src="{% static 'main/img/icon.png' %}" alt="icon">
+    <span class="icon">База данных для установок</span>
+    <nav>
+  <h3>Навигация</h3>
+<ul>
+  <li><a href="{% url 'home' %}"><i class="fas fa-home"></i> Главная</a></li>
+  <li><a href="{% url 'about' %}"><i class="fas fa-paper-plane"></i> О нас</a></li>
+  <!-- <li><a href=""><i class="fas fa-id-card"></i> Контакты</a></li> -->
+</ul>
+
+</nav>
           <style>
           a {
           text-decoration: none;
           }
         </style>
+        </div>
     </aside>
-    <main>
-        {% block content %}
-        {% endblock %}
+    
+
+
+
+    {% comment %} форма ввода {% endcomment %}
+ <main>        
+{% block content %}
+{% endblock %}
     </main>
 
 </body>
