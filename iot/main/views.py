@@ -62,27 +62,30 @@ class ReadingCreateView(CreateView):
     form_class = ReadingForm
     template_name = 'main/reading_form.html'
     success_url = '/'
+def form_valid(self, form):
+    # Получение значения из формы
+    installation_number = form.cleaned_data['installation_number']
+    date = form.cleaned_data['date']
+    time = form.cleaned_data['time']
+    generated_power = form.cleaned_data['generated_power']
+    consumed_power = form.cleaned_data['consumed_power']
+    vertical_position = form.cleaned_data['vertical_position']
+    horizontal_position = form.cleaned_data['horizontal_position']
 
-    def form_valid(self, form):
-        # Получение значения из формы и сохранение в базе данных
-        logger.debug("Перед сохранением данных")
-        installation_number = form.cleaned_data['installation_number']
-        date = form.cleaned_data['date']
-        time = form.cleaned_data['time']
-        generated_power = form.cleaned_data['generated_power']
-        consumed_power = form.cleaned_data['consumed_power']
-        vertical_position = form.cleaned_data['vertical_position']
-        horizontal_position = form.cleaned_data['horizontal_position']
+    # Проверка наличия записи или создание новой
+    obj, created = Reading.objects.get_or_create(
+        installation_number=installation_number,
+        date=date,
+        time=time,
+        generated_power=generated_power,
+        consumed_power=consumed_power,
+        vertical_position=vertical_position,
+        horizontal_position=horizontal_position
+    )
 
-        logger.debug(f"Значения полей формы: installation_number={installation_number}, date={date}, time={time}, generated_power={generated_power}, consumed_power={consumed_power}, vertical_position={vertical_position}, horizontal_position={horizontal_position}")
 
-        Reading.objects.create(
-            installation_number=installation_number, date=date, time=time,
-            generated_power=generated_power, consumed_power=consumed_power,
-            vertical_position=vertical_position, horizontal_position=horizontal_position
-        )
-        logger.debug("После сохранения данных")
-        return super().form_valid(form)
+    return super(Reading, self).form_valid(form)
+
 
 class ReadingUpdateView(UpdateView):
     model = Reading
