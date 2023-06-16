@@ -1,11 +1,15 @@
 {% extends 'main/layout.html' %}
+{% load static %}
 
+<link rel="stylesheet" href="{% static 'main/css/main.css' %}">
 {% block content %}
-  <h2>Удалить запись</h2>
+<main class="features">  
+<h2>Удалить запись</h2>
   <form method="post">
     {% csrf_token %}
     <p>Вы действительно хотите удалить запись "{{ object }}"?</p>
     <button type="submit" class="btn btn-danger">Удалить</button>
     <a href="{% url 'home' %}" class="btn btn-secondary">Отмена</a>
+  </main>
   </form>
 {% endblock %}

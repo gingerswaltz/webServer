@@ -3,64 +3,146 @@ body {
 }
 
 aside {
-    text-decoration: none;
-    float: left;
-    background: #181818;
-    width: 20%;
-    padding: 2.5%;
-    height: 100vh;
-    color: #fff;
-    border-right: 5 px solid #4d4d4d;
+  position: relative; /* Добавлено свойство position */
+  text-decoration: none;
+  float: left;
+  background: #181818;
+  width: 20%;
+  padding: 2.5%;
+  height: 100vh;
+  color: #fff;
+  border-right: 5px solid #4d4d4d;
+  overflow: auto; 
+z-index: 0;
+}
+
+
+
+
+
+
+
+ img {
+  position: absolute;
+  bottom: 60px;
+  left: 20px;
+  width: calc(100% - 40px); /* Изменено ширина на основе родительского aside */
+  z-index: 1;
+  display: flex;
+  margin-bottom: 20px;
 
 }
 
-aside img{
-    float: left;
-    width: 80px;
-}
 
-aside .logo{
-    font-size: 40px;
-    margin-left: 10px;
-    font-weight: bold;
-    position: relative;
-    top:-5px;
+.icon {
+
+  position: absolute; 
+  font-size: 15px;
+  text-align: left;
+  font-family: 'Courier New', Courier, monospace;
+  white-space: auto;
+  overflow: auto;
+  text-overflow: ellipsis;
+  bottom: 20px; /* Изменено значение, чтобы сдвинуть текст вниз */
 }
+ 
+
+
+
+
 
 aside h3 {
     font-size: 28px;
     margin-top: 50px;
 }
 
-aside ul { list-style: none }
-aside ul li{
-    color: #fff;
-    display: block;
-    margin-top: 20px;
-    transition: transform .5s ease;
- }
+aside ul {
+  list-style: none;
 
- aside ul li:hover, aside ul a:hover{
-    color: #1397d5;
-    text-decoration: none;
-    transform: scale(1.05);
- }
+}
+
+
+
+
 
  main .features {
     float: left;
     color: #fff;
-    margin-top: 100px;
-    text-align: center;
     width: 75%;
+    margin-left: 25px; 
  }
 
-main .features h1 { font-size:50px; }
-main .features p {max-width: 400px; margin: 20 px auto;}
+ .features h1 { 
+  font-size:50px;
+  color: #fff;
+  text-align: center;
+  margin-top: 20px;
+
+}
+.features h2 { 
+  font-size:50px;
+  color: #fff;
+}
+  .features p {
+  max-width: 400px; 
+  margin: 20 px auto;
+  color: #fff;
+  text-align: left;
+  font-size:20px;
+  margin-top: 50px;
+
+
+}
+
+
+
+.inputform {
+  color: #fff;
+  position: static;
+}
+
+
+.inputform h5 {
+  font-size:50px;
+  color: #fff;
+  margin-left: 215px;
+}
+.inputform label {
+  display: inline-block;
+  width: 150px;
+  text-align: left;
+  margin-right: 10px;
+  margin-top: 25px;
+  margin-left: 25px;
+}
+
+.inputform input {
+  width: 200px;
+  padding: 5px;
+  margin-bottom: 10px;
+}
+
+.inputform button {
+  display: inline-block;
+  width: 150px;
+  text-align: center;
+  margin-right: 10px;
+  margin-top: 25px;
+  margin-left: 25px;
+}
+
+
+.btn {
+  position: relative;
+  z-index: 1;
+}
 
 table {
   border-collapse: collapse;
   width: 100%;
   margin-bottom: 20px;
+  margin-top: 90px;
+
 }
 
 table th,
@@ -69,8 +151,37 @@ table td {
   text-align: left;
   border: 1px solid #ddd;
   color: #fff;
+
 }
 
 table th {
   background-color: #333;
 }
+
+ nav {
+  position: absolute;
+  top: 35px;
+  left: 20px;
+  width: 100%;
+}
+
+/* Дополнительные стили для меню навигации */
+nav h3 {
+  margin-bottom: 10px;
+}
+
+nav ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+nav ul a {
+  text-decoration: none;
+  color: #fff;
+}
+
+ul li a {
+  display: inline-block;
+  padding: 5px 10px;
+  margin: 5px 0;
+} 
