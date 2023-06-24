@@ -8,8 +8,8 @@ class Reading(models.Model):
     consumed_power = models.FloatField()
     vertical_position = models.IntegerField()
     horizontal_position = models.IntegerField()
-    ip = models.ForeignKey('Ip', on_delete=models.CASCADE, null=True, blank=True)
 
 class Ip(models.Model):
     ip_address = models.CharField(max_length=15, default='')
     port = models.CharField(max_length=5, default='')
+    reading = models.ForeignKey(Reading, on_delete=models.CASCADE, null=True, blank=True)
