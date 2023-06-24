@@ -3,11 +3,15 @@ from django.http import HttpResponse
 from django import forms
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from .models import Reading
+from .models import Ip
+
 import logging
 
 def index(request):
-    data = Reading.objects.all()
-    return render(request, 'main/index.html', {'readings': data})
+    readings = Reading.objects.all()
+    context = {'readings': readings}
+    return render(request, 'main/index.html', context)
+
 
 
 def about(request):
