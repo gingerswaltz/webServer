@@ -16,3 +16,4 @@ __pycache__/
 *.po
 *.mo
 iot/.vscode/launch.json
+.DS_Store

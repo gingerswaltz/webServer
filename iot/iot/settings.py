@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-aj0x5ipre2y+^1r7l3@9a%97@_-*3ve!p*h94c%e#fi!qo&lg*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True        # todo
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -131,6 +131,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+#uncomment on prod
+#STATIC_ROOT = '/tmp/webServer/webServer/iot/main/static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

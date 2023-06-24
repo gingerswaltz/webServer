@@ -6,7 +6,13 @@
 {% block content %}
   <form method="post" class="inputform">
     {% csrf_token %}
-    <h5>Добавить новую запись</h5>
+     <h5>
+      {% if reading %}
+        Обновление записи
+      {% else %}
+        Создать новую запись
+      {% endif %}
+    </h5>
     <input type="hidden" name="csrfmiddlewaretoken" value="xXHfDFYxwoVph032NfnEC1sY3Y0b2pElWuj4tXcLsXOeANLpYDQHh4mivIG2TbFI">
     <p>
       <label for="id_installation_number">Installation number:</label>
@@ -42,6 +48,15 @@
       <label for="id_horizontal_position">Horizontal position:</label>
       <input type="number" name="horizontal_position" required id="id_horizontal_position" placeholder="0.0">
     </p>
+
+    <p>
+     <label for="id_ip">IP Address:</label>
+      <input type="text" name="ip" id="id_ip" placeholder="192.168.0.1">
+    </p>
+
+
+
+
 
     <button type="submit" class="btn btn-primary">Сохранить</button>
   </form>

@@ -16,6 +16,8 @@
       <th>Consumed Power</th>
       <th>Vertical Position</th>
       <th>Horizontal Position</th>
+      <th>IP Address</th>
+
     </tr>
   </thead>
   <tbody>
@@ -28,6 +30,7 @@
         <td>{{ reading.consumed_power }}</td>
         <td>{{ reading.vertical_position }}</td>
         <td>{{ reading.horizontal_position }}</td>
+        <td>{{ reading.ip.ip_address }}</td>
         <td><a href="{% url 'reading_update' reading.pk %}" class="btn btn-warning">Изменить</a></td>
         <td><a href="{% url 'reading_delete' reading.pk %}" class="btn btn-danger">Удалить</a></td>
       </tr>
