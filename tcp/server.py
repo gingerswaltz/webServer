@@ -132,5 +132,8 @@ try:
     loop.run_until_complete(main())
 except KeyboardInterrupt:
     print("Программа остановлена вручную")
+except BrokenPipeError:
+    print(f"Соединение с {client_address[0]}:{client_address[1]} разорвано на стадии отправки данных")
+    connected_clients.remove((client_socket, client_address))
 finally:
     loop.close()
