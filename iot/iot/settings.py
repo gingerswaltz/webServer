@@ -141,8 +141,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'iot/main/static')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
-    #'/var/www/static/',
+ os.path.join(BASE_DIR, "static"),
+         #'/var/www/static/',
 ]
 
 

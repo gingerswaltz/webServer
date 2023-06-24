@@ -68,31 +68,37 @@ async def add_to_database(data):
 
 
 # Функция для обработки подключения клиента
+# Функция для обработки подключения клиента
 async def handle_client(client_socket, client_address):
     print(f"Установлено подключение с {client_address[0]}:{client_address[1]}")
     connected_clients.append((client_socket, client_address))
 
     while True:
-        data = await loop.sock_recv(client_socket, 1024)
+        try:
+            data = await loop.sock_recv(client_socket, 1024)
 
-        # Проверка, является ли полученные данные пустыми. Если да, то клиент отключился.
-        if not data:
+            # Проверка, является ли полученные данные пустыми. Если да, то клиент отключился.
+            if not data:
+                print(f"Подключение с {client_address[0]}:{client_address[1]} разорвано")
+                connected_clients.remove((client_socket, client_address))
+                break
+
+            # Преобразование полученных данных из байтовой строки в строку в кодировке UTF-8.
+            data = data.decode('utf-8')
+
+            print("Получены данные:", data)
+
+            # Добавление данных в базу данных.
+            try:
+                json_data = json.loads(data)
+                await add_to_database(json_data)
+                print("Данные успешно добавлены в базу данных")
+            except (json.JSONDecodeError, psycopg2.Error) as e:
+                print("Ошибка при обработке данных или добавлении в базу данных:", str(e))
+        except (ConnectionResetError, ConnectionAbortedError):
             print(f"Подключение с {client_address[0]}:{client_address[1]} разорвано")
             connected_clients.remove((client_socket, client_address))
             break
-
-        # Преобразование полученных данных из байтовой строки в строку в кодировке UTF-8.
-        data = data.decode('utf-8')
-
-        print("Получены данные:", data)
-
-        # Добавление данных в базу данных.
-        try:
-            json_data = json.loads(data)
-            await add_to_database(json_data)
-            print("Данные успешно добавлены в базу данных")
-        except (json.JSONDecodeError, psycopg2.Error) as e:
-            print("Ошибка при обработке данных или добавлении в базу данных:", str(e))
 
 # Функция для опроса клиентов
 async def poll_clients():
