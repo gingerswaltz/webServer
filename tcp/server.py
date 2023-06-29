@@ -114,6 +114,9 @@ async def poll_clients():
             except (ConnectionResetError, ConnectionAbortedError):
                 print(f"Клиент {client_address[0]}:{client_address[1]} не отвечает, удаление из списка подключенных клиентов")
                 disconnected_clients.append((client_socket, client_address))
+            
+            except Exception as e:
+                print("Ошибка при работе:", str(e))
 
         for client_socket, client_address in disconnected_clients:
             connected_clients.remove((client_socket, client_address))
