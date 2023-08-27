@@ -68,7 +68,6 @@ async def add_to_database(data):
 
 
 # Функция для обработки подключения клиента
-# Функция для обработки подключения клиента
 async def handle_client(client_socket, client_address):
     print(f"Установлено подключение с {client_address[0]}:{client_address[1]}")
     connected_clients.append((client_socket, client_address))
