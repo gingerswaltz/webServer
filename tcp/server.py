@@ -120,6 +120,8 @@ async def poll_clients():
         for client_socket, client_address in disconnected_clients:
             connected_clients.remove((client_socket, client_address))
 
+import threading
+
 async def main():
     # Создание TCP-сокета
     tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -128,19 +130,10 @@ async def main():
 
     print(f"Ожидание TCP-подключения на {tcp_host}:{tcp_port}...")
 
-    # Запуск задачи для опроса клиентов
-    asyncio.create_task(poll_clients())
-
+    # Запуск задачи для обработки клиентов
     while True:
         client_socket, client_address = await loop.sock_accept(tcp_socket)
-        await asyncio.create_task(handle_client(client_socket, client_address))
+        threading.Thread(target=handle_client, args=(client_socket, client_address)).start()
 
-try:
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-except KeyboardInterrupt:
-    print("Программа остановлена вручную")
-except Exception as e:
-    print("Ошибка при работе:", str(e))
-finally:
-    loop.close()
+    # Запуск задачи для опроса клиентов
+    threading.Thread(target=poll_clients).start()

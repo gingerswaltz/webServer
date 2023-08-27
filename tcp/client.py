@@ -59,6 +59,11 @@ try:
     print('Получен ответ от сервера:', response.decode('utf-8'))
 except Exception as e:
     print('Ошибка при отправке данных:', str(e))
-finally:
+
+try:
     # Закрытие соединения
     tcp_socket.close()
+except Exception as e:
+    print('Ошибка при закрытии соединения:', str(e))
+finally:
+    print('Соединение закрыто')
