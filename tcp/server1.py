@@ -115,13 +115,13 @@ def main():
       tcp_socket.listen()
       connected_clients.append((tcp_host, tcp_port))
       print(f"Ожидание TCP-подключения на {tcp_host}:{tcp_port}...")
-
+      poll_thread=threading.Thread(target=poll_clients, args=())
+      poll_thread.start()
       while True:
         client_socket, client_address = tcp_socket.accept()
         client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
-        poll_thread=threading.Thread(target=poll_clients, args=())
         client_thread.start()
-        poll_thread.start()
+        
 
 
 if __name__ == "__main__":
