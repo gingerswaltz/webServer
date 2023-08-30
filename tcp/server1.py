@@ -10,7 +10,7 @@ parser.add_argument('--db-host', type=str, default='localhost', help='Database h
 parser.add_argument('--db-name', type=str, default='DBForWebServer', help='Database name')
 parser.add_argument('--db-user', type=str, default='postgres', help='Database user')
 parser.add_argument('--db-password', type=str, default='1', help='Database password')
-parser.add_argument('--tcp-host', type=str, default='localhost', help='TCP server host')
+parser.add_argument('--tcp-host', type=str, default='192.168.31.151', help='TCP server host')
 parser.add_argument('--tcp-port', type=int, default=1024, help='TCP server port')
 args = parser.parse_args()
 
@@ -90,41 +90,51 @@ def handle_client(client_socket, client_address):
             
 
 def poll_clients():
-        
-        disconnected_clients = []
-        # Захват мьютекса перед доступом к connected_clients
+    disconnected_clients = []
+    # Захват мьютекса перед доступом к connected_clients
+    while True:
         with connected_clients_mutex:
             for client_socket, client_address in connected_clients:
                 try:
-                   client_socket.sendall(b"Ping")
-                   client_socket.recv(1024)
+                    if client_socket!=None:
+                        client_socket.sendall(b"Ping")
+                        client_socket.recv(1024)
                 except (ConnectionResetError, ConnectionAbortedError):
-                  print(f"Клиент {client_address[0]}:{client_address[1]} не отвечает, удаление из списка подключенных клиентов")
-                  disconnected_clients.append((client_socket, client_address))
+                    print(f"Клиент {client_address[0]}:{client_address[1]} не отвечает, удаление из списка подключенных клиентов")
+                    disconnected_clients.append((client_socket, client_address))
                 except Exception as e:
-                    print("Ошибка при работе:", str(e))
+                    print("Ошибка при работе poll clients:", str(e))
 
             for client_socket, client_address in disconnected_clients:
                 connected_clients.remove((client_socket, client_address))
 
 
 def main():
-       # Создание TCP-сокета
-      tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      tcp_socket.bind((tcp_host, tcp_port))
-      tcp_socket.listen()
-      connected_clients.append((tcp_host, tcp_port))
-      print(f"Ожидание TCP-подключения на {tcp_host}:{tcp_port}...")
-      poll_thread=threading.Thread(target=poll_clients, args=())
-      poll_thread.start()
-      while True:
-        client_socket, client_address = tcp_socket.accept()
-        client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
-        client_thread.start()
-        
+    # Создание TCP-сокета
+    try:
+        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_socket.bind((tcp_host, tcp_port))
+        tcp_socket.listen()
+          
+        print(f"Ожидание TCP-подключения на {tcp_host}:{tcp_port}...")
+    
+        poll_thread = threading.Thread(target=poll_clients, args=())
+        poll_thread.start()
+    
+        while True:
+            client_socket, client_address = tcp_socket.accept()
+            client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
+            connected_clients.append((client_socket, client_address))
+            print(f"Клиент {client_address[0]}:{client_address[1]} добавлен в список")
+            client_thread.start()
+
+    except Exception as e:
+                    print("Ошибка при работе main:", str(e))
+
 
 
 if __name__ == "__main__":
     main()
+
 
       
