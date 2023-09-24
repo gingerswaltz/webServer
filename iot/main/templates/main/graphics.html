@@ -1,0 +1,69 @@
+{% extends 'main/layout.html' %}
+{% load static %}
+
+{% block title %} Графики мощности {% endblock %}
+
+{% block content %}
+    <head>
+        <link rel="stylesheet" href="{% static 'main/css/main.css' %}">
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+        <style>
+            #generated-power-plot, #consumed-power-plot {
+                width: 100%;
+                height: 400px;
+                background-color: #f1f1f1; /* Здесь указывается цвет фона графиков */
+}
+
+        </style>
+    </head>
+    <body>
+        <div id="generated-power-plot"></div>
+
+
+        <div id="consumed-power-plot"></div>
+
+        <script>
+            $(document).ready(function() {
+                // Данные для графиков
+                var times = [{% for reading in readings %}"{{ reading.time }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
+                var generatedPower = [{% for reading in readings %}{{ reading.generated_power }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+                var consumedPower = [{% for reading in readings %}{{ reading.consumed_power }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+                // Построение графика вырабатываемой мощности
+                var genPowerTrace = {
+                    x: times,
+                    y: generatedPower,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Вырабатываемая мощность'
+                };
+                var genPowerData = [genPowerTrace];
+                var genPowerLayout = {
+                    xaxis: {title: 'Дата и время'},
+                    yaxis: {title: 'Мощность'},
+                    title: 'Вырабатываемая мощность'
+                };
+                Plotly.newPlot('generated-power-plot', genPowerData, genPowerLayout);
+
+                // Построение графика потребляемой мощности
+                var conPowerTrace = {
+                    x: times,
+                    y: consumedPower,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Потребляемая мощность'
+                };
+                var conPowerData = [conPowerTrace];
+                var conPowerLayout = {
+                    xaxis: {title: 'Дата и время'},
+                    yaxis: {title: 'Мощность'},
+                    title: 'Потребляемая мощность'
+                };
+                Plotly.newPlot('consumed-power-plot', conPowerData, conPowerLayout);
+            });
+        </script>
+    </body>
+{% endblock %}

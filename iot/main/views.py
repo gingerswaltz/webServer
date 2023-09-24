@@ -4,8 +4,10 @@ from django import forms
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from .models import Reading
 from .models import Ip
-
+import matplotlib.pyplot as plt
+from datetime import datetime
 import logging
+
 
 def index(request):
     readings = Reading.objects.all()
@@ -13,11 +15,8 @@ def index(request):
     return render(request, 'main/index.html', context)
 
 
-
 def about(request):
     return render(request, 'main/about.html')
-
-
 
 
 # def reading(request):
@@ -51,7 +50,7 @@ class ReadingListView(ListView):
 
 
 class ReadingForm(forms.ModelForm):
-    #additional_field = forms.CharField(label="Additional Field")
+    # additional_field = forms.CharField(label="Additional Field")
 
     class Meta:
         model = Reading
@@ -61,11 +60,14 @@ class ReadingForm(forms.ModelForm):
 
 logger = logging.getLogger(__name__)
 
+
 class ReadingCreateView(CreateView):
     model = Reading
     form_class = ReadingForm
     template_name = 'main/reading_form.html'
     success_url = '/'
+
+
 def form_valid(self, form):
     # Получение значения из формы
     installation_number = form.cleaned_data['installation_number']
@@ -87,7 +89,6 @@ def form_valid(self, form):
         horizontal_position=horizontal_position
     )
 
-
     return super(Reading, self).form_valid(form)
 
 
@@ -101,3 +102,41 @@ class ReadingUpdateView(UpdateView):
         context = super().get_context_data(**kwargs)
         context['action'] = 'Изменить'
         return context
+
+
+
+
+def graphics(request):
+    readings = Reading.objects.all() # Получение данных из базы данных
+    context = {'readings': readings}
+    return render(request, 'main/graphics.html', context)
+
+#
+# # Разделение данных на различные списки
+# dates = [reading.date for reading in readings]
+# times = [datetime.combine(reading.date, reading.time) for reading in readings]
+# generated_power = [reading.generated_power for reading in readings]
+# consumed_power = [reading.consumed_power for reading in readings]
+#
+# # График вырабатываемой мощности в зависимости от даты и времени
+# plt.figure(figsize=(12, 6))
+# plt.plot(times, generated_power, label='Вырабатываемая мощность')
+# plt.xlabel('Дата и время')
+# plt.ylabel('Мощность')
+# plt.title('Вырабатываемая мощность')
+# plt.legend()
+# plt.xticks(rotation=45)
+# plt.grid(True)
+# plt.show()
+#
+# # График потребляемой мощности в зависимости от даты и времени
+# plt.figure(figsize=(12, 6))
+# plt.plot(times, consumed_power, label='Потребляемая мощность')
+# plt.xlabel('Дата и время')
+# plt.ylabel('Мощность')
+# plt.title('Потребляемая мощность')
+# plt.legend()
+# plt.xticks(rotation=45)
+# plt.grid(True)
+# plt.show()
+
