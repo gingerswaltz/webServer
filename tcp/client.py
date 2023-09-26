@@ -1,6 +1,7 @@
 import socket
 import json
 import argparse
+import time
 print("Run with --tcp-host ip  or  --tcp-port port, where ip  and port is that is u need. default is localhost:1024")
 
 # Настройки TCP-сервера
@@ -29,41 +30,35 @@ data['horizontal_position']=input('Горизонтальный угол: ') or 
 
 # Преобразование данных в JSON-строку
 
-# Создание TCP-сокета
-tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+while True:
+    try:
+        # Создание TCP-сокета
+        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-try:
-    # Подключение к серверу
+        # Подключение к серверу
+        tcp_socket.connect((tcp_host, int(tcp_port)))
+        socket_address = tcp_socket.getsockname()
+        address = socket_address[0]
+        port = socket_address[1]
 
-    tcp_socket.connect((tcp_host, int(tcp_port)))
-    socket_address = tcp_socket.getsockname()
-    address = socket_address[0]
-    port = socket_address[1]
-    
+        print(f'Успешное подключение к серверу {tcp_host}:{tcp_port}')
 
-    
-    print(f'Успешное подключение к серверу {tcp_host}:{tcp_port}')
-    
+        data['ip_address'] = address
+        data['port'] = port
+        json_data = json.dumps(data)
 
-    
-   
-    data['ip_address'] = address
-    data['port']=port
-    json_data = json.dumps(data)
-    # Отправка данных
-    tcp_socket.sendall(json_data.encode('utf-8'))
-    print(f'Данные отправлены: {json_data}')
+        # Отправка данных
+        tcp_socket.sendall(json_data.encode('utf-8'))
+        print(f'Данные отправлены: {json_data}')
 
-    # Получение ответа от сервера
-    response = tcp_socket.recv(1024)
-    print('Получен ответ от сервера:', response.decode('utf-8'))
-except Exception as e:
-    print('Ошибка при отправке данных:', str(e))
+        # Получение ответа от сервера
+        response = tcp_socket.recv(1024)
+        print('Получен ответ от сервера:', response.decode('utf-8'))
 
-try:
-    # Закрытие соединения
-    tcp_socket.close()
-except Exception as e:
-    print('Ошибка при закрытии соединения:', str(e))
-finally:
-    print('Соединение закрыто')
+        # Закрытие соединения
+        tcp_socket.close()
+
+        # Ожидание 2 минут перед следующей отправкой
+        time.sleep(120)
+    except Exception as e:
+        print('Ошибка при отправке данных:', str(e))

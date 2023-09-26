@@ -118,14 +118,20 @@ def main():
           
         print(f"Ожидание TCP-подключения на {tcp_host}:{tcp_port}...")
     
+<<<<<<< Updated upstream
         # poll_thread = threading.Thread(target=poll_clients, args=())
         # poll_thread.start()
+=======
+>>>>>>> Stashed changes
     
         while True:
             client_socket, client_address = tcp_socket.accept()
             client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
             connected_clients.append((client_socket, client_address))
+<<<<<<< Updated upstream
             #print(f"Клиент {client_address[0]}:{client_address[1]} добавлен в список")
+=======
+>>>>>>> Stashed changes
             client_thread.start()
 
     except Exception as e:
