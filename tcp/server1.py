@@ -10,7 +10,7 @@ parser.add_argument('--db-host', type=str, default='localhost', help='Database h
 parser.add_argument('--db-name', type=str, default='DBForWebServer', help='Database name')
 parser.add_argument('--db-user', type=str, default='postgres', help='Database user')
 parser.add_argument('--db-password', type=str, default='1', help='Database password')
-parser.add_argument('--tcp-host', type=str, default='192.168.31.151', help='TCP server host')
+parser.add_argument('--tcp-host', type=str, default='localhost', help='TCP server host')
 parser.add_argument('--tcp-port', type=int, default=1024, help='TCP server port')
 args = parser.parse_args()
 
@@ -79,36 +79,22 @@ def handle_client(client_socket, client_address):
     else:
         data = data.decode('utf-8')  # Преобразование байтов в строку UTF-8
 
-        # Добавление данных в базу данных.
+        # Получите IP-адрес и порт клиента
+        client_ip, client_port = client_address
+        
+        # Обновите JSON-структуру
         try:
             json_data = json.loads(data)
+            json_data["ip_address"] = client_ip
+            json_data["port"] = client_port
+            
+            # Добавление данных в базу данных.
             add_to_database(json_data)
             print("Данные успешно добавлены в базу данных")
         except (json.JSONDecodeError, psycopg2.Error) as e:
             print("Ошибка при обработке данных или добавлении в базу данных:", str(e))
 
             
-
-def poll_clients():
-    disconnected_clients = []
-    # Захват мьютекса перед доступом к connected_clients
-    while True:
-        with connected_clients_mutex:
-            for client_socket, client_address in connected_clients:
-                try:
-                    if client_socket!=None:
-                        client_socket.sendall(b"Ping")
-                        client_socket.recv(1024)
-                except (ConnectionResetError, ConnectionAbortedError):
-                    print(f"Клиент {client_address[0]}:{client_address[1]} не отвечает, удаление из списка подключенных клиентов")
-                    disconnected_clients.append((client_socket, client_address))
-                except Exception as e:
-                    print("Ошибка при работе poll clients:", str(e))
-
-            for client_socket, client_address in disconnected_clients:
-                connected_clients.remove((client_socket, client_address))
-
-
 def main():
     # Создание TCP-сокета
     try:
@@ -118,20 +104,14 @@ def main():
           
         print(f"Ожидание TCP-подключения на {tcp_host}:{tcp_port}...")
     
-<<<<<<< Updated upstream
         # poll_thread = threading.Thread(target=poll_clients, args=())
         # poll_thread.start()
-=======
->>>>>>> Stashed changes
     
         while True:
             client_socket, client_address = tcp_socket.accept()
             client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
             connected_clients.append((client_socket, client_address))
-<<<<<<< Updated upstream
             #print(f"Клиент {client_address[0]}:{client_address[1]} добавлен в список")
-=======
->>>>>>> Stashed changes
             client_thread.start()
 
     except Exception as e:
