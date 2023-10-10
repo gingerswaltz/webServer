@@ -43,8 +43,6 @@ while True:
 
         print(f'Успешное подключение к серверу {tcp_host}:{tcp_port}')
 
-        data['ip_address'] = address
-        data['port'] = port
         json_data = json.dumps(data)
 
         # Отправка данных
