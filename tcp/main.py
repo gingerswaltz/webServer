@@ -27,3 +27,5 @@ while True:
         # Ввод с клавиатуры и отправка клиенту
         message = input("Введите сообщение для отправки клиенту: ")
         client_socket.sendall(message.encode())
+    
+    client_socket.close()
