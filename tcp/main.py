@@ -2,7 +2,7 @@ import socket
 
 # Создание соксового сервера
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind(('185.108.197.41', 1024))  # Пример адреса и порта
+server_socket.bind(('85.193.80.133', 1024))  # Пример адреса и порта
 server_socket.listen(5)
 
 while True:
