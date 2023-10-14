@@ -15,7 +15,7 @@ def send_messages():
     while True:
         message = input("Введите сообщение для отправки клиенту (для завершения введите 'exit'): ")
         if message.lower() == 'exit':
-            client_socket.sendall(b'exit')  # Отправляем 'exit' клиенту
+            client_socket.sendall(message.encode())  # Отправляем 'exit' клиенту
             client_socket.close()  # Закрываем соединение с клиентом
             break
         client_socket.sendall(message.encode())
