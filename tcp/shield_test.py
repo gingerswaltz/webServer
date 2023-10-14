@@ -15,6 +15,8 @@ def send_messages():
     while True:
         message = input("Введите сообщение для отправки клиенту (для завершения введите 'exit'): ")
         if message.lower() == 'exit':
+            client_socket.sendall(b'exit')  # Отправляем 'exit' клиенту
+            client_socket.close()  # Закрываем соединение с клиентом
             break
         client_socket.sendall(message.encode())
 
@@ -24,7 +26,11 @@ def receive_messages():
         data = client_socket.recv(1024)
         if not data:
             break
-        print(f"Получено от клиента: {data.decode()}")
+        received_data = data.decode()
+        if received_data.lower() == 'exit':
+            client_socket.close()  # Закрываем соединение с клиентом
+            break
+        print(f"Получено от клиента: {received_data}")
 
 # Создание и запуск потоков
 send_thread = threading.Thread(target=send_messages)
@@ -37,5 +43,4 @@ receive_thread.start()
 send_thread.join()
 receive_thread.join()
 
-client_socket.close()
 server_socket.close()
