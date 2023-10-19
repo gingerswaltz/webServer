@@ -32,15 +32,20 @@ def receive_messages():
             break
         print(f"Получено от клиента: {received_data}")
 
+def main():
 # Создание и запуск потоков
-send_thread = threading.Thread(target=send_messages)
-receive_thread = threading.Thread(target=receive_messages)
+    try:
+        send_thread = threading.Thread(target=send_messages)
+        receive_thread = threading.Thread(target=receive_messages)
+    
+        send_thread.start()
+        receive_thread.start()
 
-send_thread.start()
-receive_thread.start()
-
-# Ожидание завершения работы потоков
-send_thread.join()
-receive_thread.join()
-
-server_socket.close()
+        # Ожидание завершения работы потоков
+        send_thread.join()
+        receive_thread.join()   
+    except Exception as e: 
+        print(e)
+        server_socket.close()
+    finally:    
+        server_socket.close()
