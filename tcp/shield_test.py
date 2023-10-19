@@ -35,17 +35,18 @@ def receive_messages():
 def main():
 # Создание и запуск потоков
     try:
+       
         send_thread = threading.Thread(target=send_messages)
         receive_thread = threading.Thread(target=receive_messages)
-    
         send_thread.start()
         receive_thread.start()
 
-        # Ожидание завершения работы потоков
-        send_thread.join()
-        receive_thread.join()   
+          
     except Exception as e: 
         print(e)
         server_socket.close()
     finally:    
+        send_thread.join()
+        receive_thread.join() 
         server_socket.close()
+        
