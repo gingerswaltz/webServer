@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="../static/main/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <ul class="nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'home' %}">Главная</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'table' %}">Таблица</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'panels' %}">Панели</a>
+              </li>
+            </ul>
+        </aside>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

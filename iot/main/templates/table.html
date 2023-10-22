@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Таблица{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="../static/main/css/table.css">
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th><a href="?sort_column=solar_panel&sort_direction={{ sort_direction }}">Id</a></th>
+                <th><a href="?sort_column=horizontal_position&sort_direction={{ sort_direction }}">Поворот по горизонтали</a></th>
+                <th><a href="?sort_column=vertical_position&sort_direction={{ sort_direction }}">Поворот по вертикали</a></th>
+                <th><a href="?sort_column=consumed_power&sort_direction={{ sort_direction }}"></a>Потребляемая мощность</th>
+                <th><a href="?sort_column=generated_power&sort_direction={{ sort_direction }}"></a>Вырабатываемая мощность</th>
+                <th><a href="?sort_column=date&sort_direction={{ sort_direction }}"></a>Дата</th>
+                <th><a href="?sort_column=time&sort_direction={{ sort_direction }}"></a>Время</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for char in characteristics %}
+                <tr>
+                    <td>{{char.solar_panel}}</td>
+                    <td>{{char.horizontal_position}}</td>
+                    <td>{{char.vertical_position}}</td>
+                    <td>{{char.consumed_power}}</td>
+                    <td>{{char.generated_power}}</td>
+                    <td>{{char.date}}</td>
+                    <td>{{char.time}}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7">Нет данных</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
