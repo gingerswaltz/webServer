@@ -1,14 +1,16 @@
+/* Стиль для таблицы */
 table {
-    border-collapse: collapse;
     width: 100%;
-}
-
-table, th, td {
-    border: 1px solid #ccc;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Добавим тень для поднятия таблицы */
+    border-radius: 5px; /* Закруглим углы таблицы */
 }
 
 th, td {
-    padding: 5px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    text-align: left;
 }
 
 th {
@@ -19,11 +21,17 @@ tr:nth-child(even) {
     background-color: #f2f2f2;
 }
 
+/* Стиль для контейнера таблицы */
 .table-container {
-    max-width: 800px; /* Устанавливаем максимальную ширину для таблицы */
-    margin-left: 280px; /* Центрируем таблицу */
+    max-width: 100%; /* Убираем ограничение максимальной ширины */
+    margin: 20px; /* Добавим отступы для выравнивания таблицы */
 }
 
-.panel-tabel-container {
-    
+/* Стиль для панели таблицы (если требуется) */
+.panel-table-container {
+    max-width: 100%; /* Убираем ограничение максимальной ширины */
+    margin: 20px; /* Добавим отступы для выравнивания панели таблицы */
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Добавим тень для поднятия панели таблицы */
+    border-radius: 5px; /* Закруглим углы панели таблицы */
 }

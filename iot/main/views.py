@@ -6,8 +6,9 @@ from .models import Solar_Panel, Characteristics
 import logging
 
 def dashboard_char_table(request):
-    char = Characteristics.objects.order_by('-date', '-time')[:5]   
-    return render(request, "dashboard.html", {'characteristics': char})
+    solar = Solar_Panel.objects.all()
+    char = Characteristics.objects.order_by('-date', '-time')[:5]
+    return render(request, "dashboard.html", {'characteristics': char, 'panels':solar})
 
 def char_table(request):
     char = Characteristics.objects.order_by('-date', '-time') 
