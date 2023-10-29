@@ -2,7 +2,7 @@ from AbstractTCP import TCPServer
 import socket
 import asyncio
 import json
-
+import psycopg2
 
 # Класс TCP сервера
 class MyTCPServer(TCPServer):
@@ -53,9 +53,10 @@ class MyTCPServer(TCPServer):
         try:
             conn = psycopg2.connect(**self.database_connection)
             cursor = conn.cursor()
+            table_name=""; # !!!
 
             # Пример SQL-запроса для вставки данных в таблицу
-            sql = "INSERT INTO table_name (column1, column2) VALUES (%s, %s)"
+            sql = f"INSERT INTO {table_name} (column1, column2) VALUES (%s, %s)"
             values = (data["value1"], data["value2"])  # Заменить на реальные значения
 
             cursor.execute(sql, values)

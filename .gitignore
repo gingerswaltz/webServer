@@ -1,4 +1,5 @@
 # created by virtualenv automatically
+venv/
 
 # Исключить файлы временных данных
 *.pyc
