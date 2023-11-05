@@ -1,46 +1,53 @@
-from AbstractTCP import TCPServer
 import socket
 import asyncio
 import json
-import psycopg2
+import asyncpg
+from AbstractTCP import AbstractTCPServer
+from AbstractTCP import AbstractTCPConnection
 
-# Класс TCP сервера
-class MyTCPServer(TCPServer):
-    def __init__(self, host, port, database_connection):
+# Класс TCP подключения
+class TCPConnection(AbstractTCPConnection):
+    
+    def __init__(self, host, port, database_connection, client_socket, client_address):
         super().__init__(host, port)
-        self.database_connection=database_connection
-
-    async def start(self):
+        self._database_connection=database_connection
+        self.client_socket=client_socket;
+        self.client_address=client_address;
+    
+    
+    #инициализация подключения
+    async def _initialize_connection(self):
         try:
-            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server_socket.bind((self.host, self.port))
-            self.server_socket.listen(50)  # Максимальное количество ожидающих соединений
-
-            #print(f"Сервер запущен на {self.host}:{self.port}")
-
-            while True:
-                client_socket, client_address = self.server_socket.accept()
-               # print(f"Подключение от {client_address}")
-                asyncio.create_task(self.handle_client(client_socket))
+            self.server_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server_socket.bind(self.host, self.port)
+            self.server_socket.listen(1)
+            self.client_socket, self.client_address=self.server_socket.accept()
         except Exception as e:
             return str(e)
-
-    async def handle_client(self, client_socket):
+    
+    #обработка подключения
+    async def handle_client(self):
         try:
-            data=await self.receive_data(client_socket)
+            self._initialize_connection()
+            data=await self._receive_data(self.client_socket)
             request=json.loads(data)
         # Запись данных в базу данных PostgreSQL
-            self.insert_data_into_database(request)
-        #todo: logic process
+            self._insert_data(request, "")
+            self._receive_data(self.client_socket)
         except Exception as e:
             return str(e)
+        finally:
+            # После выполнения основной логики (успешно или с ошибкой)
+            self.handle_client_disconnect(self.client_socket)
     
     
-    async def receive_data(self, client_socket):
+    
+    #получение данных от клиента
+    async def _receive_data(self):
         try:
             data=b""
             while True:
-                chunk=await client_socket.recv(1024)
+                chunk=await self.client_socket.recv(1024)
                 if not chunk:
                     break
                 data+=chunk
@@ -48,35 +55,50 @@ class MyTCPServer(TCPServer):
         except Exception as e:
             return str(e)
     
-    
-    def insert_data_into_database(self, data):
+    #вставка данных в БД
+    async def _insert_data(self, data, table_name):
         try:
-            conn = psycopg2.connect(**self.database_connection)
-            cursor = conn.cursor()
-            table_name=""; # !!!
+         conn = await asyncpg.connect(**self. _database_connection)
+         cursor = conn.cursor()
 
-            # Пример SQL-запроса для вставки данных в таблицу
-            sql = f"INSERT INTO {table_name} (column1, column2) VALUES (%s, %s)"
-            values = (data["value1"], data["value2"])  # Заменить на реальные значения
-
-            cursor.execute(sql, values)
-            conn.commit()
-            cursor.close()
-            conn.close()
-
+        # Пример SQL-запроса для вставки данных в таблицу
+         sql = f"INSERT INTO {table_name} (column1, column2) VALUES (%s, %s)"
+         values = (data["value1"], data["value2"])  # Заменить на реальные значения
+         
+         #*values - распаковка элементов кортежа в том порядке, как они записаны
+         await conn.execute(sql, *values)
         except Exception as e:
             return str(e)
-
-    def stop(self):
-        # Здесь вы можете реализовать логику остановки сервера
-        pass
-
+        finally: 
+            return 0;
    
+    #получение записи из БД
+    def _fetch_record(self, record_id, table_name):
+        try: 
+            conn=asyncpg.connect(**self._database_connection)
+            cursor=conn.cursor();
+            sql=f"SELECT * from {table_name} WHERE id=%s"
+            values=(record_id, )
+            cursor.execute();
+            record=cursor.fetchone();
+            cursor.close();
+            conn.close();
+            return record;
+        except Exception as e:
+            return str(e)
+        
 
-    def fetch_updated_record(self):
-        # Здесь вы можете реализовать извлечение измененной записи из базы данных
-        pass
+    #отправка записи из БД клиенту
+    async def _send_record(self, record):
+       try:
+        record_json=json.dumps(record);
+        await self.client_socket.send(record_json.encode("utf-8"));
+       except Exception as e:
+           return str(e)
+       
 
-    def send_record_to_client(self, client_socket, record):
-        # Здесь вы можете реализовать отправку записи клиенту по TCP-соксету
-        pass
+    def handle_client_disconnect(self):
+        # Реализация обработки отключения клиента
+        str=(f"Клиент {self.client_socket.getpeername()} отключился")
+        self.client_socket.close()
+        return(str)
