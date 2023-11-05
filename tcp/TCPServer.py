@@ -2,6 +2,7 @@ import socket
 import asyncio
 import json
 import asyncpg
+import logging
 from AbstractTCP import AbstractTCPServer
 from AbstractTCP import AbstractTCPConnection
 
@@ -13,7 +14,7 @@ class TCPConnection(AbstractTCPConnection):
         self._database_connection=database_connection
         self.client_socket=client_socket;
         self.client_address=client_address;
-    
+        logging.basicConfig(filename='connections.log', level=logging.ERROR)
     
     #инициализация подключения
     async def _initialize_connection(self):
@@ -23,7 +24,8 @@ class TCPConnection(AbstractTCPConnection):
             self.server_socket.listen(1)
             self.client_socket, self.client_address=self.server_socket.accept()
         except Exception as e:
-            return str(e)
+            self.log_exception(e)
+            raise e
     
     #обработка подключения
     async def handle_client(self):
@@ -33,12 +35,11 @@ class TCPConnection(AbstractTCPConnection):
             request=json.loads(data)
         # Запись данных в базу данных PostgreSQL
             self._insert_data(request, "")
-            self._receive_data(self.client_socket)
         except Exception as e:
-            return str(e)
+            self.log_exception(e)
+            raise e
         finally:
-            # После выполнения основной логики (успешно или с ошибкой)
-            self.handle_client_disconnect(self.client_socket)
+            self._client_disconnect(self.client_socket)
     
     
     
@@ -53,40 +54,40 @@ class TCPConnection(AbstractTCPConnection):
                 data+=chunk
             return data.decode("utf-8")
         except Exception as e:
-            return str(e)
+            self.log_exception(e)
+            raise e
     
     #вставка данных в БД
     async def _insert_data(self, data, table_name):
         try:
          conn = await asyncpg.connect(**self. _database_connection)
-         cursor = conn.cursor()
-
-        # Пример SQL-запроса для вставки данных в таблицу
          sql = f"INSERT INTO {table_name} (column1, column2) VALUES (%s, %s)"
          values = (data["value1"], data["value2"])  # Заменить на реальные значения
-         
-         #*values - распаковка элементов кортежа в том порядке, как они записаны
+
+         # *values - распаковка элементов кортежа в том порядке, как они записаны
          await conn.execute(sql, *values)
         except Exception as e:
-            return str(e)
+            self.log_exception(e)
+            raise e 
         finally: 
-            return 0;
+            await conn.close();
    
     #получение записи из БД
-    def _fetch_record(self, record_id, table_name):
+    async def _fetch_record(self, record_id, table_name):
         try: 
-            conn=asyncpg.connect(**self._database_connection)
-            cursor=conn.cursor();
+            # ** - распаковка словаря.
+            conn= await asyncpg.connect(**self._database_connection)
             sql=f"SELECT * from {table_name} WHERE id=%s"
             values=(record_id, )
-            cursor.execute();
-            record=cursor.fetchone();
-            cursor.close();
-            conn.close();
+            await conn.execute(sql, *values);
+            record= await conn.fetchone();
             return record;
         except Exception as e:
-            return str(e)
-        
+            self.log_exception(e)
+            raise e
+        finally:
+           await conn.close();
+
 
     #отправка записи из БД клиенту
     async def _send_record(self, record):
@@ -94,11 +95,16 @@ class TCPConnection(AbstractTCPConnection):
         record_json=json.dumps(record);
         await self.client_socket.send(record_json.encode("utf-8"));
        except Exception as e:
-           return str(e)
+           self.log_exception(e)
+           raise e  
        
-
-    def handle_client_disconnect(self):
-        # Реализация обработки отключения клиента
+    #обработка отключения клиента
+    async def _client_disconnect(self):
         str=(f"Клиент {self.client_socket.getpeername()} отключился")
-        self.client_socket.close()
+        await self.client_socket.close() # закрытие соединения
         return(str)
+
+     # Метод логгирования
+    def log_exception(self, exception):
+        logger = logging.getLogger(__name__) # экземпляр объекта логгера
+        logger.exception("An exception occurred: %s", exception) # запись ошибки в логгер. логгер по умолчанию записывает в файл connections.log
