@@ -13,7 +13,7 @@ import os #todo ???
 from pathlib import Path
 import sys
 
-os.environ['LANG'] = 'en_US.utf-8'
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -34,13 +34,14 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    'main',
+    'main.apps.MainConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'chartjs'
 ]
 
 MIDDLEWARE = [
@@ -82,8 +83,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'DBForWebServer',
         'USER': 'postgres',
-        'PASSWORD': '1',
+        'PASSWORD': 'admin',
         'HOST': 'localhost',
+        'PORT': '5432',
     },
 }
 
