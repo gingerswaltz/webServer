@@ -10,12 +10,15 @@ from AbstractTCP import AbstractTCPConnection
 class TCPConnection(AbstractTCPConnection):
     
     def __init__(self, host, port, database_connection, client_socket, client_address):
-        super().__init__(host, port)
-        self._database_connection=database_connection
-        self.client_socket=client_socket;
-        self.client_address=client_address;
+        super().__init__()
+        self.host=host;
+        self.port=port;
+        self._database_connection = database_connection
+        self.client_socket = client_socket
+        self.client_address = client_address
         logging.basicConfig(filename='connections.log', level=logging.ERROR)
-    
+
+
     #инициализация подключения
     async def _initialize_connection(self):
         try:
@@ -108,3 +111,5 @@ class TCPConnection(AbstractTCPConnection):
     def log_exception(self, exception):
         logger = logging.getLogger(__name__) # экземпляр объекта логгера
         logger.exception("An exception occurred: %s", exception) # запись ошибки в логгер. логгер по умолчанию записывает в файл connections.log
+
+

@@ -35,7 +35,7 @@ class AbstractTCPConnection(ABC):
 
     # метод будет использоваться для отправки измененной записи клиенту через его TCP-соксет. Он должен принимать соксет клиента и измененную запись, и выполнять процесс отправки данных клиенту.
     @abstractmethod
-    def _send_data(self, data):
+    def _send_record(self, data):
         pass
 
     # метод будет использоваться для получения данных от клиента через TCP-сокет.
@@ -50,5 +50,5 @@ class AbstractTCPConnection(ABC):
    
     # Этот метод может быть использован для обработки случаев, когда клиент отключается. Он должен выполнять необходимые действия, связанные с отключением клиента, чтобы поддерживать корректную работу сервера.
     @abstractmethod
-    def handle_client_disconnect(self, client_socket):
+    def _client_disconnect(self, client_socket):
         pass
