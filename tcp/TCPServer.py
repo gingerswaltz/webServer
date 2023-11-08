@@ -21,18 +21,18 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
 
     async def handle_client_wrapper(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         address = writer.get_extra_info('peername')
-        client_socket = writer.get_extra_info('socket')
         print(f"New client connected: {address}")
-        
-        # Создаем экземпляр TCPConnection
+    
+    # Создаем экземпляр TCPConnection
         connection = TCPConnection(self.database_config)
-        
-        # Обрабатываем клиентское подключение
-        await connection.handle_client(client_socket, address)
-        
-        # Закрываем подключение
+        print(connection)
+    # Обрабатываем клиентское подключение
+        await connection.handle_client(reader, writer, address)
+    
+    # Закрываем подключение
         writer.close()
         await writer.wait_closed()
+
 
     async def stop_server(self) -> None:
         if self.server is not None:
@@ -45,62 +45,102 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
     def __init__(self, database_config: dict):
         self.database_config = database_config
 
-    async def handle_client(self, client_socket: socket.socket, address: Tuple[str, int]) -> None:
+    async def handle_client(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, address: Tuple[str, str]) -> None:
         try:
-            # Получаем данные от клиента
-            data = await self.receive_data(client_socket)
-            # Вставляем данные в базу
-            await self.insert_data(data)
-            # Получаем обновленную запись (пример: получаем по ID)
-            record = await self.fetch_record(data['id'])
-            # Отправляем запись клиенту
-            await self.send_record(client_socket, record)
+            print(f"Starting handle for {address}")
+            while not reader.at_eof():
+                # Получаем данные от клиента
+                data = await self.receive_data(reader)
+                if not data:  # Если данных нет, возможно клиент отключился
+                    print(f"No data received. Client {address} may have disconnected.")
+                    break
+
+                print("Received data:", data)
+                if not isinstance(data, dict):
+                    raise ValueError("Data received is not a dictionary")
+
+                # Добавляем IP-адрес и порт клиента к данным
+                data['ip_address'] = address[0]
+                data['port'] = str(address[1])
+                print(f"Data: {data}")
+
+                # Вставляем данные в базу и отправляем обратно, если это необходимо
+                await self.insert_data(data)
+                record = await self.fetch_record(data['installation_number'])
+                await self.send_record(writer, record)
+
         except Exception as e:
             self.log_exception(e)
         finally:
-            await self.client_disconnect(client_socket, address)
+            # Теперь закрытие соединения произойдет здесь, если цикл прерван или произошла ошибка
+            print(f"Closing connection for {address}")
+            writer.close()
+            await writer.wait_closed()
 
-    async def send_record(self, client_socket: socket.socket, data: Any) -> None:
+    async def send_record(self, writer: asyncio.StreamWriter, data: Any) -> None:
         try:
-            await client_socket.send(json.dumps(data).encode('utf-8'))
+            writer.write(json.dumps(data).encode('utf-8'))
+            await writer.drain()  # Убедитесь, что все данные отправлены
         except Exception as e:
             self.log_exception(e)
 
-    async def receive_data(self, client_socket: socket.socket) -> Any:
+
+    async def receive_data(self, reader: asyncio.StreamReader) -> dict:
         try:
-            data = b''
-            while True:
-                chunk = await client_socket.recv(4096)
-                if not chunk:
-                    break
-                data += chunk
-            return json.loads(data.decode('utf-8'))
+            raw_data = await reader.readuntil(b'\n')
+            print(f"Raw data: {raw_data!r}")  # Выведем сырые данные
+            decoded_data = raw_data.decode('utf-8').strip()
+            print(f"Decoded data: {decoded_data}")  # Выведем декодированные данные
+            json_data = json.loads(decoded_data)
+            print(f"JSON data: {json_data}")  # Выведем JSON данные
+            return json_data
+        except asyncio.IncompleteReadError:
+            print("Client disconnected before sending a newline.")
+            return {}
+        except json.JSONDecodeError as e:
+            self.log_exception(f"Received data is not valid JSON: {e}")
+            return {}
         except Exception as e:
-            self.log_exception(e)
+            self.log_exception(f"An exception occurred: {e}")
+            return {}
+
+
+
+
 
     async def insert_data(self, data: Any) -> None:
         try:
+            print(f"Connecting to DB to insert data...")
             conn = await asyncpg.connect(**self.database_config)
-            await conn.execute('INSERT INTO table_name (column1, column2) VALUES ($1, $2)',
-                               data['column1'], data['column2'])
+            print(f"Connected to DB. Inserting data...")
+            await conn.execute('INSERT INTO main_solar_panel (installation_number, ip_address, port) VALUES ($1, $2, $3)',
+                               data['installation_number'], data['ip_address'], data['port'])
+            print(f"Data inserted successfully.")
         except Exception as e:
             self.log_exception(e)
         finally:
             await conn.close()
+            print(f"DB connection closed.")
 
-    async def client_disconnect(self, client_socket: socket.socket, address) -> None:
-        client_socket.close()
-        return(f"Client {address[0]}:{address[1]} has disconnected.")
+    async def client_disconnect(self, writer: asyncio.StreamWriter, address) -> None:
+        writer.close()
+        await writer.wait_closed()
+        print(f"Client {address[0]}:{address[1]} has disconnected.")
 
-    async def fetch_record(self, record_id: int) -> Any:
+
+    async def fetch_record(self, record_id: int) -> dict:
         try:
             conn = await asyncpg.connect(**self.database_config)
-            record = await conn.fetchrow('SELECT * FROM table_name WHERE id=$1', record_id)
-            return record
+            record = await conn.fetchrow(
+            'SELECT * FROM main_solar_panel WHERE installation_number = $1',
+            record_id
+        )
+            # Конвертируем Record в словарь перед возвращением
+            return dict(record) if record else {}
         except Exception as e:
             self.log_exception(e)
-        finally:
-            await conn.close()
+            return {}
+
 
     def log_exception(self, exception: Exception) -> None:
         print(f"An exception occurred: {exception}")
