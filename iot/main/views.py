@@ -9,7 +9,6 @@ from django.core.serializers import serialize
 import json
 
 from django.views.generic import TemplateView
-from chartjs.views.lines import BaseLineChartView
 
 def dashboard_char_table(request):
     solar_panels = Solar_Panel.objects.all()

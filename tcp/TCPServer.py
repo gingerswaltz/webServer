@@ -1,115 +1,122 @@
-import socket
 import asyncio
-import json
 import asyncpg
-import logging
-from AbstractTCP import AbstractTCPServer
-from AbstractTCP import AbstractTCPConnection
+import json
+from typing import Any, Tuple
+import socket
+import AbstractTCP
+from typing import Any, Dict
 
-# Класс TCP подключения
-class TCPConnection(AbstractTCPConnection):
-    
-    def __init__(self, host, port, database_connection, client_socket, client_address):
-        super().__init__()
-        self.host=host;
-        self.port=port;
-        self._database_connection = database_connection
-        self.client_socket = client_socket
-        self.client_address = client_address
-        logging.basicConfig(filename='connections.log', level=logging.ERROR)
+class TCPServer(AbstractTCP.AbstractTCPServer):
+    def __init__(self, host: str, port: int, database_config: Dict[str, Any]):
+        super().__init__(host, port, database_config)
+        self.server = None
+
+    async def start_server(self) -> None:
+        self.server = await asyncio.start_server(
+            self.handle_client_wrapper, self.host, self.port
+        )
+        print(f"Server started on {self.host}:{self.port}")
+        async with self.server:
+            await self.server.serve_forever()
+
+    async def handle_client_wrapper(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        address = writer.get_extra_info('peername')
+        client_socket = writer.get_extra_info('socket')
+        print(f"New client connected: {address}")
+        
+        # Создаем экземпляр TCPConnection
+        connection = TCPConnection(self.database_config)
+        
+        # Обрабатываем клиентское подключение
+        await connection.handle_client(client_socket, address)
+        
+        # Закрываем подключение
+        writer.close()
+        await writer.wait_closed()
+
+    async def stop_server(self) -> None:
+        if self.server is not None:
+            self.server.close()
+            await self.server.wait_closed()
+            print("Server has been stopped.")
 
 
-    #инициализация подключения
-    async def _initialize_connection(self):
+class TCPConnection(AbstractTCP.AbstractTCPConnection):
+    def __init__(self, database_config: dict):
+        self.database_config = database_config
+
+    async def handle_client(self, client_socket: socket.socket, address: Tuple[str, int]) -> None:
         try:
-            self.server_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server_socket.bind(self.host, self.port)
-            self.server_socket.listen(1)
-            self.client_socket, self.client_address=self.server_socket.accept()
+            # Получаем данные от клиента
+            data = await self.receive_data(client_socket)
+            # Вставляем данные в базу
+            await self.insert_data(data)
+            # Получаем обновленную запись (пример: получаем по ID)
+            record = await self.fetch_record(data['id'])
+            # Отправляем запись клиенту
+            await self.send_record(client_socket, record)
         except Exception as e:
             self.log_exception(e)
-            raise e
-    
-    #обработка подключения
-    async def handle_client(self):
-        try:
-            self._initialize_connection()
-            data=await self._receive_data(self.client_socket)
-            request=json.loads(data)
-        # Запись данных в базу данных PostgreSQL
-            self._insert_data(request, "")
-        except Exception as e:
-            self.log_exception(e)
-            raise e
         finally:
-            self._client_disconnect(self.client_socket)
-    
-    
-    
-    #получение данных от клиента
-    async def _receive_data(self):
+            await self.client_disconnect(client_socket, address)
+
+    async def send_record(self, client_socket: socket.socket, data: Any) -> None:
         try:
-            data=b""
+            await client_socket.send(json.dumps(data).encode('utf-8'))
+        except Exception as e:
+            self.log_exception(e)
+
+    async def receive_data(self, client_socket: socket.socket) -> Any:
+        try:
+            data = b''
             while True:
-                chunk=await self.client_socket.recv(1024)
+                chunk = await client_socket.recv(4096)
                 if not chunk:
                     break
-                data+=chunk
-            return data.decode("utf-8")
+                data += chunk
+            return json.loads(data.decode('utf-8'))
         except Exception as e:
             self.log_exception(e)
-            raise e
-    
-    #вставка данных в БД
-    async def _insert_data(self, data, table_name):
+
+    async def insert_data(self, data: Any) -> None:
         try:
-         conn = await asyncpg.connect(**self. _database_connection)
-         sql = f"INSERT INTO {table_name} (column1, column2) VALUES (%s, %s)"
-         values = (data["value1"], data["value2"])  # Заменить на реальные значения
-
-         # *values - распаковка элементов кортежа в том порядке, как они записаны
-         await conn.execute(sql, *values)
+            conn = await asyncpg.connect(**self.database_config)
+            await conn.execute('INSERT INTO table_name (column1, column2) VALUES ($1, $2)',
+                               data['column1'], data['column2'])
         except Exception as e:
             self.log_exception(e)
-            raise e 
-        finally: 
-            await conn.close();
-   
-    #получение записи из БД
-    async def _fetch_record(self, record_id, table_name):
-        try: 
-            # ** - распаковка словаря.
-            conn= await asyncpg.connect(**self._database_connection)
-            sql=f"SELECT * from {table_name} WHERE id=%s"
-            values=(record_id, )
-            await conn.execute(sql, *values);
-            record= await conn.fetchone();
-            return record;
-        except Exception as e:
-            self.log_exception(e)
-            raise e
         finally:
-           await conn.close();
+            await conn.close()
+
+    async def client_disconnect(self, client_socket: socket.socket, address) -> None:
+        client_socket.close()
+        return(f"Client {address[0]}:{address[1]} has disconnected.")
+
+    async def fetch_record(self, record_id: int) -> Any:
+        try:
+            conn = await asyncpg.connect(**self.database_config)
+            record = await conn.fetchrow('SELECT * FROM table_name WHERE id=$1', record_id)
+            return record
+        except Exception as e:
+            self.log_exception(e)
+        finally:
+            await conn.close()
+
+    def log_exception(self, exception: Exception) -> None:
+        print(f"An exception occurred: {exception}")
 
 
-    #отправка записи из БД клиенту
-    async def _send_record(self, record):
-       try:
-        record_json=json.dumps(record);
-        await self.client_socket.send(record_json.encode("utf-8"));
-       except Exception as e:
-           self.log_exception(e)
-           raise e  
-       
-    #обработка отключения клиента
-    async def _client_disconnect(self):
-        str=(f"Клиент {self.client_socket.getpeername()} отключился")
-        await self.client_socket.close() # закрытие соединения
-        return(str)
-
-     # Метод логгирования
-    def log_exception(self, exception):
-        logger = logging.getLogger(__name__) # экземпляр объекта логгера
-        logger.exception("An exception occurred: %s", exception) # запись ошибки в логгер. логгер по умолчанию записывает в файл connections.log
 
 
+# Пример использования TCPServer
+if __name__ == "__main__":
+    database_config = {
+        # Предполагаемые параметры подключения к базе данных
+        "user": "postgres",
+        "password": "1",
+        "database": "DBForWebServer",
+        "host": "localhost"
+    }
+
+    server = TCPServer('127.0.0.1', 1024, database_config)
+    asyncio.run(server.start_server())
