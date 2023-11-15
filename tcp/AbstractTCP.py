@@ -1,54 +1,85 @@
 from abc import ABC, abstractmethod
+import asyncio
+from typing import Any, Dict, Tuple
+import socket
 
-# Абстрактный класс TCP сервера.
+
 class AbstractTCPServer(ABC):
-    # метод должен отвечать за запуск TCP-сервера и начало прослушивания заданного хоста и порта. Он будет слушать входящие соединения и создавать соксеты для клиентов.
+    def __init__(self, host: str, port: int, database_config: Dict[str, Any]):
+        self.host = host
+        self.port = port
+        self.database_config = database_config
+
     @abstractmethod
-    def start(self, host, port):
-        pass
-    
-    # метод должен обеспечивать корректное завершение работы TCP-сервера и закрытие всех сокетов. Он будет вызываться, когда необходимо остановить сервер.
-    @abstractmethod
-    def stop(self):
-        pass
-    
-    
-    
-    # Метод будет отслеживать изменения в базе данных.
-    @abstractmethod
-    def db_check(self):
+    async def start_server(self) -> None:
+        """
+        Запускает сервер, который слушает входящие подключения на заданном хосте и порте.
+        """
         pass
 
-
-    # метод будет отвечать за обработку ошибок, которые могут возникнуть в вашем сервере. Он может выполнять журналирование ошибок, отправку уведомлений и другие действия в случае ошибок.    
     @abstractmethod
-    def handle_error(self, error_message):
+    async def handle_client_wrapper(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        """
+        Функция-обертка для обработки клиентского подключения. Должна создать экземпляр TCPConnection
+        и вызвать его метод handle_client.
+        """
         pass
+
+    @abstractmethod
+    async def stop_server(self) -> None:
+        """
+        Останавливает сервер и закрывает все активные подключения.
+        """
+        pass
+
    
         
-# Абстрактный класс TCP соединения
 class AbstractTCPConnection(ABC):
-     # обработка каждого входящего соединения от клиента. Он должен читать запись из базы данных, отслеживать изменения в базе данных и отправлять измененную запись клиенту по TCP. Работает параллельно
+    """
+    Абстрактный класс, описывающий базовый интерфейс TCP соединения.
+    Классы-наследники должны реализовать все абстрактные методы.
+    """
+
     @abstractmethod
-    def handle_client(self, client_socket):
+    async def handle_client(self, client_socket: socket.socket, address: Tuple[str, int]) -> None:
+        """
+        Обрабатывает входящее соединение от клиента.
+        Должен быть реализован для чтения записи из базы данных,
+        отслеживания изменений и отправки данных клиенту.
+        """
         pass
 
-    # метод будет использоваться для отправки измененной записи клиенту через его TCP-соксет. Он должен принимать соксет клиента и измененную запись, и выполнять процесс отправки данных клиенту.
     @abstractmethod
-    def _send_data(self, data):
+    async def send_record(self, client_socket: socket.socket, data: Any) -> None:
+        """
+        Отправляет измененную запись клиенту через его TCP-сокет.
+        """
         pass
 
-    # метод будет использоваться для получения данных от клиента через TCP-сокет.
     @abstractmethod
-    def _receive_data(self, client_socket):
+    async def receive_data(self, client_socket: socket.socket) -> Any:
+        """
+        Получает данные от клиента через TCP-сокет.
+        """
         pass
 
-    # Метод должен добавлять или обновлять запись в базе данных. Данные берутся от клиента.
     @abstractmethod
-    def _insert_data(self, data):
+    async def insert_data(self, data: Any) -> None:
+        """
+        Добавляет или обновляет запись в базе данных на основе данных, полученных от клиента.
+        """
         pass
-   
-    # Этот метод может быть использован для обработки случаев, когда клиент отключается. Он должен выполнять необходимые действия, связанные с отключением клиента, чтобы поддерживать корректную работу сервера.
+
     @abstractmethod
-    def handle_client_disconnect(self, client_socket):
+    async def client_disconnect(self, client_socket: socket.socket) -> None:
+        """
+        Обрабатывает отключение клиента и выполняет необходимые действия для поддержания сервера.
+        """
+        pass
+
+    @abstractmethod
+    def log_exception(self, exception: Exception) -> None:
+        """
+        Логирует исключения, возникающие в процессе работы соединения.
+        """
         pass
