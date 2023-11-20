@@ -1,6 +1,7 @@
 import asyncio
 import threading
 from TCPServer import *
+import sys
 
 def start_server_loop(loop, server):
     asyncio.set_event_loop(loop)
@@ -41,6 +42,8 @@ def user_interface(server):
 
         except Exception as e:
             print(f"Произошла ошибка: {e}")
+
+    sys.exit(0) # Завершение работы программы
 
 if __name__ == "__main__":
     database_config = {

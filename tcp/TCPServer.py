@@ -7,6 +7,8 @@ import logging
 from typing import Any, Dict
 
 # Класс TCP Сервера
+
+
 class TCPServer(AbstractTCP.AbstractTCPServer):
     def __init__(self, host: str, port: int, database_config: Dict[str, Any]):
         super().__init__(host, port, database_config)
@@ -15,17 +17,17 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         self.connection_id_mapping = {}  # Словарь для ID к writer
         self.next_client_id = 1  # Счетчик для следующего ID клиента
         self.current_connection_id = None  # Текущее активное подключение
+        self.running = False  # Флаг состояния работы
         logging.basicConfig(level=logging.INFO,
                             format='%(asctime)s - %(levelname)s - %(message)s')
 
-    # Старт сервера
-    async def start_server(self) -> None:
-        self.server = await asyncio.start_server(
-            self.handle_client_wrapper, self.host, self.port
-        )
+    async def start_server(self):
+        self.server = await asyncio.start_server(self.handle_client_wrapper, self.host, self.port)
         logging.info(f"Server started on {self.host}:{self.port}")
-        async with self.server:
-            await self.server.serve_forever()
+        self.running = True
+        while self.running:
+            await asyncio.sleep(1)  # Таймаут проверки состояния
+        logging.info("Server has been stopped.")
 
     # Выбор активного подключения
     def set_active_connection(self, client_id):
@@ -36,8 +38,8 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
             logging.info(f"Active connection set to ID {client_id}")
         else:
             logging.error(f"Client ID {client_id} not found")
-    # Сброс для выбора другого подключения
 
+    # Сброс для выбора другого подключения
     def reset_current_connection(self):
         """ Сбрасывает текущее активное подключение. """
         self.current_connection_id = None
@@ -76,19 +78,20 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
 
         address = writer.get_extra_info('peername')
         logging.info(f"New client connected: {client_id} (Address: {address})")
-    
-        try:    
+
+        try:
             connection = TCPConnection(self.database_config)
 
             while True:  # Бесконечный цикл для обработки данных от клиента
                 client_data = await connection.receive_data(reader)
                 if not client_data:
-                    await asyncio.sleep(1)  # небольшая задержка перед следующей итерацией
+                    # небольшая задержка перед следующей итерацией
+                    await asyncio.sleep(1)
                     continue  # Продолжить ожидание новых данных
 
                 table = "main_characteristics" if "generated_power" in client_data else "main_solar_panel"
                 unique_key = "id"
-            
+
                 sql_query = await connection.check_query(table, client_data, unique_key)
                 if sql_query:
                     await connection.insert_data(sql_query)
@@ -102,33 +105,39 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
                 logging.info(f"Client {client_id} disconnected")
                 writer.close()
                 await writer.wait_closed()
-    
+
     # Остановка сервера
-    async def stop_server(self) -> None:
+    async def stop_server(self):
         """
         Останавливает сервер и обрабатывает все активные подключения.
         """
+        self.running = False
         if self.server is not None:
             # Сообщение о закрытии сервера
-            shutdown_message = {"status": "shutdown", "message": "Server is shutting down."}
+            shutdown_message = {"status": "shutdown",
+                                "message": "Server is shutting down."}
 
-            # Отправка сообщения о закрытии сервера клиентам и закрытие соединений
+            # Отправка сообщения о закрытии сервера клиентам
             for client_id, writer in self.connection_id_mapping.items():
                 try:
                     writer.write(json.dumps(shutdown_message).encode('utf-8'))
                     await writer.drain()
                 except Exception as e:
-                    logging.error(f"Error sending shutdown message to client ID {client_id}: {e}")
-                finally:
-                    writer.close()
-                    await writer.wait_closed()
-                    logging.info(f"Closed connection with client ID {client_id}")
+                    logging.error(f"Error sending shutdown message to client ID {
+                                  client_id}: {e}")
+
+            # Закрытие всех подключений
+            for writer in self.connection_id_mapping.values():
+                writer.close()
+                await writer.wait_closed()
+
+            # Очистка списка подключений
+            self.connection_id_mapping.clear()
 
             # Закрытие сервера
             self.server.close()
             await self.server.wait_closed()
             logging.info("Server has been stopped.")
-
 
 
 # Класс TCP подключения
@@ -165,7 +174,8 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
             while True:
                 data = await self.receive_data(reader)
                 if not data:
-                    logging.info(f"Waiting for new data from client {address}.")
+                    logging.info(
+                        f"Waiting for new data from client {address}.")
                     continue  # Продолжить ожидание новых данных
 
                 # Обработка полученных данных
@@ -256,8 +266,6 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
             self.log_exception(f"An exception occurred: {e}")
             return {}
 
-
-
     async def insert_data(self, query: str, *args) -> None:
         """
         Выполняет SQL-запрос с заданными аргументами.
@@ -284,8 +292,6 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
             await conn.close()
             logging.info("DB connection closed.")
 
-
-
     async def check_query(self, table: str, data: dict, unique_key: str) -> (str, list):
         """
         Генерирует SQL-запрос INSERT или UPDATE в зависимости от наличия записи в базе данных.
@@ -300,19 +306,23 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
         """
         try:
             conn = await asyncpg.connect(**self.database_config)
-            logging.info(f"Checking for existing record in {table} with {unique_key} = {data[unique_key]}")
+            logging.info(f"Checking for existing record in {
+                         table} with {unique_key} = {data[unique_key]}")
             result = await conn.fetchrow(f"SELECT * FROM {table} WHERE {unique_key} = {data[unique_key]}")
             await conn.close()
 
             if result:
-                update_parts = [f"{key} = '{data[key]}'" for key in data if key != unique_key]
-                update_query = f"UPDATE {table} SET {', '.join(update_parts)} WHERE {unique_key} = {data[unique_key]}"
+                update_parts = [f"{key} = '{
+                    data[key]}'" for key in data if key != unique_key]
+                update_query = f"UPDATE {table} SET {', '.join(update_parts)} WHERE {
+                    unique_key} = {data[unique_key]}"
                 logging.info(f"Generated UPDATE query: {update_query}")
                 return update_query
             else:
                 columns = ', '.join(data.keys())
                 values = ', '.join([f"'{data[key]}'" for key in data])
-                insert_query = f"INSERT INTO {table} ({columns}) VALUES ({values})"
+                insert_query = f"INSERT INTO {
+                    table} ({columns}) VALUES ({values})"
                 logging.info(f"Generated INSERT query: {insert_query}")
                 return insert_query
         except Exception as e:
@@ -320,8 +330,8 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
             logging.error(f"Error in check_query: {e}")
             return ""
 
-
     # Обработка отключения клиента
+
     async def client_disconnect(self, client_id: str, server: TCPServer) -> None:
         """
         Обрабатывает отключение клиента.
