@@ -15,7 +15,6 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         super().__init__(host, port, database_config)
         self.server = None
         self.active_connections = {}  # Словарь активных подключений
-        self.connection_id_mapping = {}  # Словарь для ID к writer
         self.current_connection_id = None  # Текущее активное подключение
         self.connections_mapping = {}  # Добавляем новый словарь для связи с TCPConnection
         self.running = False  # Флаг состояния работы
@@ -33,7 +32,7 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
     # Выбор активного подключения
     def set_active_connection(self, client_id):
         """ Устанавливает активное подключение по ID. """
-        writer = self.connection_id_mapping.get(int(client_id))
+        writer = self.connections_mapping.get(int(client_id))
         if writer:
             self.current_connection_id = client_id
             logging.info(f"Active connection set to ID {client_id}")
@@ -86,7 +85,7 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
                                 "message": "Server is shutting down."}
 
             # Отправка сообщения о закрытии сервера клиентам
-            for client_id, writer in self.connection_id_mapping.items():
+            for client_id, writer in self.connections_mapping.items():
                 try:
                     writer.write(json.dumps(shutdown_message).encode('utf-8'))
                     await writer.drain()
@@ -95,12 +94,12 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
                                   client_id}: {e}")
 
             # Закрытие всех подключений
-            for writer in self.connection_id_mapping.values():
+            for writer in self.connections_mapping.values():
                 writer.close()
                 await writer.wait_closed()
 
             # Очистка списка подключений
-            self.connection_id_mapping.clear()
+            self.connections_mapping.clear()
 
             # Закрытие сервера
             self.server.close()
@@ -109,9 +108,9 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
     
     
     async def client_disconnect(self, client_id):
-        if client_id in self.connection_id_mapping:
-            del self.connection_id_mapping[client_id]
-            logging.info(f"Client {client_id} removed from connection_id_mapping.")
+        if client_id in self.connections_mapping:
+            del self.connections_mapping[client_id]
+            logging.info(f"Client {client_id} removed from connections_mapping.")
 
         if client_id in self.active_connections:
             del self.active_connections[client_id]
@@ -122,8 +121,8 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         if old_id in self.connections_mapping:
             self.connections_mapping[new_id] = self.connections_mapping.pop(old_id)
         
-        if old_id in self.connection_id_mapping:
-            self.connection_id_mapping[new_id] = self.connection_id_mapping.pop(old_id)
+        if old_id in self.connections_mapping:
+            self.connections_mapping[new_id] = self.connections_mapping.pop(old_id)
         
         if old_id in self.active_connections:
             self.active_connections[new_id] = self.active_connections.pop(old_id)

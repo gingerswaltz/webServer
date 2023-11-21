@@ -2,7 +2,6 @@ import asyncio
 import threading
 from TCPServer import TCPServer
 import sys
-#todo: не работает показ с
 
 def start_server_loop(loop, server):
     asyncio.set_event_loop(loop)
@@ -19,13 +18,14 @@ def user_interface(server, loop):
             choice = input("Введите команду: ")
 
             if choice == '1':
-                for client_id in server.connection_id_mapping:
-                    address = server.connection_id_mapping[client_id].get_extra_info('peername')
+                for client_id in server.connections_mapping:
+                    address = server.connections_mapping[client_id].writer.get_extra_info('peername')
                     print(f"ID: {client_id}, Address: {address}")
 
+
             elif choice == '2':
-                for client_id in server.connection_id_mapping:
-                    address = server.connection_id_mapping[client_id].get_extra_info('peername')
+                for client_id in server.connections_mapping:
+                    address = server.connections_mapping[client_id].writer.get_extra_info('peername')
                     print(f"ID: {client_id}, Address: {address}")
                 client_id = input("Введите ID клиента: ")
                 try:
