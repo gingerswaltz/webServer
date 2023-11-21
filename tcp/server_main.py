@@ -1,13 +1,14 @@
 import asyncio
 import threading
-from TCPServer import *
+from TCPServer import TCPServer
 import sys
+#todo: не работает показ с
 
 def start_server_loop(loop, server):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(server.start_server())
 
-def user_interface(server):
+def user_interface(server, loop):
     while True:
         try:
             print("\nДоступные команды:")
@@ -34,16 +35,16 @@ def user_interface(server):
 
             elif choice == '3':
                 message = input("Введите сообщение: ")
-                asyncio.run(server.send_message(message))
+                asyncio.run_coroutine_threadsafe(server.send_message(message), loop)
 
             elif choice == '4':
-                asyncio.run(server.stop_server())
+                asyncio.run_coroutine_threadsafe(server.stop_server(), loop).result()
                 break
 
         except Exception as e:
             print(f"Произошла ошибка: {e}")
 
-    sys.exit(0) # Завершение работы программы
+    sys.exit(0)
 
 if __name__ == "__main__":
     database_config = {
@@ -57,4 +58,4 @@ if __name__ == "__main__":
     server_thread = threading.Thread(target=start_server_loop, args=(loop, server))
     server_thread.start()
 
-    user_interface(server)
+    user_interface(server, loop)

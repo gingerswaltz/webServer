@@ -70,13 +70,7 @@ class AbstractTCPConnection(ABC):
         """
         pass
 
-    @abstractmethod
-    async def client_disconnect(self, client_socket: socket.socket) -> None:
-        """
-        Обрабатывает отключение клиента и выполняет необходимые действия для поддержания сервера.
-        """
-        pass
-
+   
     @abstractmethod
     def log_exception(self, exception: Exception) -> None:
         """

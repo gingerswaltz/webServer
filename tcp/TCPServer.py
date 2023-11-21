@@ -1,4 +1,5 @@
 import asyncio
+import time
 import asyncpg
 import json
 from typing import Any, Tuple
@@ -6,8 +7,7 @@ import AbstractTCP
 import logging
 from typing import Any, Dict
 
-#todo stop_server, отправка данных
-
+#todo разобраться почему не возвращается список подключений
 
 # Класс TCP Сервера
 class TCPServer(AbstractTCP.AbstractTCPServer):
@@ -16,7 +16,6 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         self.server = None
         self.active_connections = {}  # Словарь активных подключений
         self.connection_id_mapping = {}  # Словарь для ID к writer
-        self.next_client_id = 1  # Счетчик для следующего ID клиента
         self.current_connection_id = None  # Текущее активное подключение
         self.connections_mapping = {}  # Добавляем новый словарь для связи с TCPConnection
         self.running = False  # Флаг состояния работы
@@ -50,69 +49,30 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         connection = self.connections_mapping.get(self.current_connection_id)
         if connection:
             try:
-                client_data = await connection.send_record(message)
-                if client_data:
-                    table = "solar_statement"
-                    sql_query = await connection.insert_query(table, client_data)
-                    if sql_query:
-                        await connection.insert_data(sql_query)
-                        logging.info(f"SQL query executed:{sql_query}")
+                await connection.send_message_only(message)
+                # Обратите внимание, что здесь нет чтения ответа, это происходит в `listen_for_messages`
             except Exception as e:
                 logging.error(f"Error sending message to client ID {self.current_connection_id}: {e}")
         else:
             logging.error(f"No connection found for client ID {self.current_connection_id}")
 
+
     # Обработка клиента
-    async def handle_client_wrapper(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        client_id = self.next_client_id
-        self.next_client_id += 1
-        self.connection_id_mapping[client_id] = writer
+    async def handle_client_wrapper(self, reader, writer):
+        # Создаем временный уникальный идентификатор для нового подключения
+        temp_client_id = f"temp_{time.time()}_{writer.get_extra_info('peername')}"
 
-        connection = TCPConnection(self.database_config, reader, writer, client_id)  # Изменено
-        self.connections_mapping[client_id] = connection  # Сохраняем связь
-        
+        # Создание нового подключения
+        connection = TCPConnection(self.database_config, reader, writer, temp_client_id, self)
+        self.connections_mapping[temp_client_id] = connection
+
+        # Запись адреса клиента
         address = writer.get_extra_info('peername')
-        
-        logging.info(f"New client connected: {client_id} (Address: {address})")
+        logging.info(f"New client connected: {temp_client_id} (Address: {address})")
 
-        try:
-            while True:  # Бесконечный цикл для обработки данных от клиента
-                client_data = await connection.receive_data()
-                if not client_data:
-                    # небольшая задержка перед следующей итерацией
-                    await asyncio.sleep(1)
-                    continue  # Продолжить ожидание новых данных
-                
-                # Извлекаем id из client_data
-                client_id_value = client_data.get('id')
+        # Запуск фоновой корутины для чтения сообщений и ожидания сообщения `update`
+        asyncio.create_task(connection.listen_for_messages())
 
-                # Формируем словарь с адресом и id
-                address_dict = {
-                "id": client_id_value,
-                "ip_address": address[0],
-                "port": address[1]
-                }
-                
-                if client_data.get("header") == "update":
-                    sql_query=await connection.update_query("main_solar_panel", address_dict, "id")
-                    await connection.insert_data(sql_query)
-                    table="main_characteristics"
-                    unique_key="id" 
-                    sql_query=await connection.update_query(table, client_data, unique_key)
-                
-                if sql_query:
-                    await connection.insert_data(sql_query)
-                    logging.info(f"SQL query executed:{sql_query}")
-
-        except Exception as e:
-            logging.error(f"Error handling client {client_id}: {e}")
-        finally:
-            # Удаление клиента из словаря активных подключений только при его отключении
-            if client_id in self.active_connections:
-                del self.active_connections[client_id]
-                logging.info(f"Client {client_id} disconnected")
-                writer.close()
-                await writer.wait_closed()
 
     # Остановка сервера
     async def stop_server(self):
@@ -146,15 +106,125 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
             self.server.close()
             await self.server.wait_closed()
             logging.info("Server has been stopped.")
+    
+    
+    async def client_disconnect(self, client_id):
+        if client_id in self.connection_id_mapping:
+            del self.connection_id_mapping[client_id]
+            logging.info(f"Client {client_id} removed from connection_id_mapping.")
+
+        if client_id in self.active_connections:
+            del self.active_connections[client_id]
+            logging.info(f"Client {client_id} removed from active_connections.")
+    
+    def update_client_mappings(self, old_id, new_id):
+        """Обновление маппингов клиента после получения нового ID"""
+        if old_id in self.connections_mapping:
+            self.connections_mapping[new_id] = self.connections_mapping.pop(old_id)
+        
+        if old_id in self.connection_id_mapping:
+            self.connection_id_mapping[new_id] = self.connection_id_mapping.pop(old_id)
+        
+        if old_id in self.active_connections:
+            self.active_connections[new_id] = self.active_connections.pop(old_id)
+
+        logging.info(f"Client mappings updated from {old_id} to {new_id}")
 
 
 # Класс TCP подключения
 class TCPConnection(AbstractTCP.AbstractTCPConnection):
-    def __init__(self, database_config: dict, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, client_id: str):
+    def __init__(self, database_config: dict, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, client_id: str, server: TCPServer):
         self.database_config = database_config
         self.reader = reader
         self.writer = writer
         self.client_id = client_id
+        self.data_queue = asyncio.Queue()
+        self.server=server
+    
+    def update_client_id(self, new_client_id):
+        old_client_id = self.client_id
+        self.client_id = new_client_id
+        self.server.update_client_mappings(old_client_id, new_client_id)
+        logging.info(f"Client ID updated from {old_client_id} to {new_client_id}")
+
+
+
+
+    async def send_message_only(self, message: str):
+        try:
+            self.writer.write(message.encode('utf-8'))
+            await self.writer.drain()
+        except Exception as e:
+            self.log_exception(e)
+    
+    async def listen_for_messages(self):
+        try:
+            while True:
+                data = await self.reader.read(4096)
+                if not data:
+                    break  # Соединение закрыто, выходим из цикла
+
+                response = data.decode()
+                json_data = json.loads(response)
+
+                # Обработка json_data
+                if json_data.get("header") == "response":
+                    # Обработка ответа
+                    table = "solar_statement"
+                    sql_query = await self.insert_query(table, json_data)
+                    if sql_query:
+                        await self.insert_data(sql_query)
+                        logging.info(f"SQL query executed:{sql_query}")
+                elif json_data.get("header") == "update":
+                    # Обработка обновления
+                    client_id_value = json_data.get('id')
+                
+                    if client_id_value:
+                        self.update_client_id(client_id_value)
+                        address = self.writer.get_extra_info('peername')
+                        address_dict = {
+                        "id": client_id_value,
+                        "ip_address": address[0],
+                        "port": address[1]
+                        }
+                        sql_query = await self.update_query("main_solar_panel", address_dict, "id")
+                        if sql_query:
+                            await self.insert_data(sql_query)
+                            logging.info(f"SQL query executed:{sql_query}")
+
+                        table = "main_characteristics"
+                        unique_key = "id"
+                        sql_query = await self.update_query(table, json_data, unique_key)
+                        if sql_query:
+                            await self.insert_data(sql_query)
+                    else:
+                        logging.error("Key 'id' not found in json_data")
+        
+        except ConnectionResetError:
+        # Обработка неожиданного отключения клиента
+            logging.info(f"Client {self.client_id} has disconnected unexpectedly.")
+            self.handle_client_disconnection()
+        except Exception as e:
+            self.log_exception(e)
+        finally:
+            # Закрытие соединения, если необходимо
+            self.writer.close()
+            await self.writer.wait_closed()
+            self.handle_client_disconnection()
+
+    def handle_client_disconnection(self):
+        # Вызываем метод client_disconnect сервера для обработки отключения клиента
+        asyncio.create_task(self.server.client_disconnect(self.client_id))
+
+        
+
+    async def start_reading(self):
+        """ Чтение данных из reader и помещение их в очередь. """
+        while True:
+            data = await self.reader.read(4096)
+            if not data:
+                break  # Поток закрыт, выходим из цикла
+            await self.data_queue.put(data)
 
     # Обработка клиента
     async def handle_client(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, address: Tuple[str, str], server: TCPServer) -> None:
@@ -189,59 +259,60 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
                 writer.close()
                 await writer.wait_closed()
 
-    async def send_record(self, message: str) -> dict:
+    async def send_record(self, message:     str) -> dict:
         try:
             # Отправляем сообщение
             self.writer.write(message.encode('utf-8'))
             await self.writer.drain()
 
-            # Чтение ответа
-            data = await self.reader.read(4096)
-            if not data:
+            # Ожидаем ответа из очереди
+            try:
+                response_data = await asyncio.wait_for(self.data_queue.get(), timeout=10.0)  # Задаем таймаут
+            except asyncio.TimeoutError:
+                logging.info("Timeout waiting for response from the client.")
+                return None
+
+            if not response_data:
                 logging.info("No response received from the client.")
                 return None
 
-            response = data.decode()
+            response = response_data.decode()
             logging.info(f"Received response from client {self.client_id}: {response}")
             return json.loads(response)
         except Exception as e:
             self.log_exception(e)
             return None
 
+
     # Обработка принятых данных
-    async def receive_data(self) -> dict:
+    async def receive_data(self):
         try:
-            # Чтение данных до символа новой строки
-            raw_data = await self.reader.readuntil(b'\n')
-            logging.info(f"Raw data: {raw_data!r}")  # Вывод сырых данных
+            while True:
+                # Чтение данных до символа новой строки
+                raw_data = await self.reader.readuntil(b'\n')
+                logging.info(f"Raw data: {raw_data!r}")
 
-            # Декодирование данных из байтов в строку
-            decoded_data = raw_data.decode('utf-8').strip()
-            # Вывод декодированных данных
-            logging.info(f"Decoded data: {decoded_data}")
+                # Декодирование данных из байтов в строку
+                decoded_data = raw_data.decode('utf-8').strip()
+                logging.info(f"Decoded data: {decoded_data}")
 
-            # Конвертация строки JSON в словарь Python
-            json_data = json.loads(decoded_data)
-            logging.info(f"JSON data: {json_data}")  # Вывод JSON данных
-            return json_data
-        # Клиент отключился до отправки новой строки
+                # Конвертация строки JSON в словарь Python
+                json_data = json.loads(decoded_data)
+                logging.info(f"JSON data: {json_data}")
+
+                # Помещаем данные в очередь
+                await self.data_queue.put(json_data)
+
         except asyncio.IncompleteReadError:
-            # Логируем информацию о клиенте, который отключился
             client_address = self.reader.get_extra_info('peername')
             logging.info("Client disconnected before sending a newline.")
-            # Отключаем клиента методом
             await self.client_disconnect(client_address)
-            return {}
 
         except json.JSONDecodeError as e:
-            # Ошибка декодирования JSON
             self.log_exception(f"Received data is not valid JSON: {e}")
-            return {}
 
         except Exception as e:
-            # Любые другие исключения
             self.log_exception(f"An exception occurred: {e}")
-            return {}
 
     async def insert_data(self, query: str, *args) -> None:
         try:
