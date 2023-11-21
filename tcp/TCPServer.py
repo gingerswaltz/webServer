@@ -18,6 +18,7 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         self.connection_id_mapping = {}  # Словарь для ID к writer
         self.next_client_id = 1  # Счетчик для следующего ID клиента
         self.current_connection_id = None  # Текущее активное подключение
+        self.connections_mapping = {}  # Добавляем новый словарь для связи с TCPConnection
         self.running = False  # Флаг состояния работы
         logging.basicConfig(level=logging.INFO,
                             format='%(asctime)s - %(levelname)s - %(message)s')
@@ -45,45 +46,38 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         """ Сбрасывает текущее активное подключение. """
         self.current_connection_id = None
 
-    # Отправка сообщения
     async def send_message(self, message):
-        """ Отправляет сообщение текущему активному клиенту. """
-        writer = self.connection_id_mapping.get(self.current_connection_id)
-        if writer:
+        connection = self.connections_mapping.get(self.current_connection_id)
+        if connection:
             try:
-                writer.write(message.encode('utf-8'))
-                await writer.drain()
+                client_data = await connection.send_record(message)
+                if client_data:
+                    table = "solar_statement"
+                    sql_query = await connection.insert_query(table, client_data)
+                    if sql_query:
+                        await connection.insert_data(sql_query)
+                        logging.info(f"SQL query executed:{sql_query}")
             except Exception as e:
-                logging.error(f"Error sending message to client ID {
-                              self.current_connection_id}: {e}")
+                logging.error(f"Error sending message to client ID {self.current_connection_id}: {e}")
         else:
-            logging.error(f"No active connection for client ID {
-                          self.current_connection_id}")
+            logging.error(f"No connection found for client ID {self.current_connection_id}")
 
     # Обработка клиента
     async def handle_client_wrapper(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        """
-        Обрабатывает асинхронное подключение клиента к серверу.
-
-        Этот метод создает новый экземпляр TCPConnection для каждого подключения,
-        назначает уникальный идентификатор клиенту и управляет его активностью в сервере.
-
-        Args:
-            reader (asyncio.StreamReader): Объект для чтения данных от клиента.
-            writer (asyncio.StreamWriter): Объект для отправки данных клиенту.
-        """
         client_id = self.next_client_id
         self.next_client_id += 1
         self.connection_id_mapping[client_id] = writer
+
+        connection = TCPConnection(self.database_config, reader, writer, client_id)  # Изменено
+        self.connections_mapping[client_id] = connection  # Сохраняем связь
+        
         address = writer.get_extra_info('peername')
         
         logging.info(f"New client connected: {client_id} (Address: {address})")
 
         try:
-            connection = TCPConnection(self.database_config)
-
             while True:  # Бесконечный цикл для обработки данных от клиента
-                client_data = await connection.receive_data(reader)
+                client_data = await connection.receive_data()
                 if not client_data:
                     # небольшая задержка перед следующей итерацией
                     await asyncio.sleep(1)
@@ -105,9 +99,6 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
                     table="main_characteristics"
                     unique_key="id" 
                     sql_query=await connection.update_query(table, client_data, unique_key)
-                elif client_data.get("header") == "response":
-                    table="solar_statement"
-                    sql_query=await connection.insert_query(table, client_data)
                 
                 if sql_query:
                     await connection.insert_data(sql_query)
@@ -159,30 +150,15 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
 
 # Класс TCP подключения
 class TCPConnection(AbstractTCP.AbstractTCPConnection):
-    def __init__(self, database_config: dict):
-        """
-        Инициализирует экземпляр TCPConnection с конфигурацией базы данных.
-
-        Args:
-            database_config (dict): Конфигурация подключения к базе данных.
-        """
+    def __init__(self, database_config: dict, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, client_id: str):
         self.database_config = database_config
+        self.reader = reader
+        self.writer = writer
+        self.client_id = client_id
 
     # Обработка клиента
     async def handle_client(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, address: Tuple[str, str], server: TCPServer) -> None:
-        """
-        Обрабатывает подключившегося клиента, читает данные, отправляет ответы и управляет подключениями.
-
-        Этот метод регистрирует подключение в словаре активных подключений сервера, обрабатывает входящие данные от клиента,
-        вставляет данные в базу данных и отправляет обратно соответствующие записи. Подключение удаляется из активных
-        при его закрытии.
-
-        Args:
-            reader (asyncio.StreamReader): Объект StreamReader для чтения данных от клиента.
-            writer (asyncio.StreamWriter): Объект StreamWriter для отправки данных клиенту.
-            address (Tuple[str, str]): Адрес клиента в формате (IP, порт).
-            server (TCPServer): Экземпляр сервера, управляющего активными подключениями.
-        """
+    
         client_id = f"{address[0]}:{address[1]}"
         try:
             logging.info(f"Starting handle for {address}")
@@ -202,9 +178,7 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
 
                 # Вставка и отправка данных
                 await self.insert_data(data)
-                record = await self.fetch_record(data['id'])
-                await self.send_record(client_id, record, server)
-
+                
         except Exception as e:
             self.log_exception(e)
         finally:
@@ -215,47 +189,30 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
                 writer.close()
                 await writer.wait_closed()
 
-    # Отправление данных
-    async def send_record(self, client_id: str, data: Any, server: TCPServer) -> None:
-        """
-        Отправляет данные указанному клиенту.
-
-        Этот метод ищет StreamWriter для указанного клиента в словаре активных подключений сервера
-        и отправляет ему данные в формате JSON. Если указанный клиент не найден, выдает ошибку.
-
-        Args:
-            client_id (str): Уникальный идентификатор клиента, которому нужно отправить данные.
-            data (Any): Данные для отправки клиенту.
-            server (TCPServer): Экземпляр сервера, содержащий информацию о всех активных подключениях.
-        """
-        writer = server.active_connections.get(client_id)
-        if writer is None:
-            logging.error(f"No active connection found for client {client_id}")
-            return
-
+    async def send_record(self, message: str) -> dict:
         try:
-            writer.write(json.dumps(data).encode('utf-8'))
-            await writer.drain()
+            # Отправляем сообщение
+            self.writer.write(message.encode('utf-8'))
+            await self.writer.drain()
+
+            # Чтение ответа
+            data = await self.reader.read(4096)
+            if not data:
+                logging.info("No response received from the client.")
+                return None
+
+            response = data.decode()
+            logging.info(f"Received response from client {self.client_id}: {response}")
+            return json.loads(response)
         except Exception as e:
             self.log_exception(e)
+            return None
 
     # Обработка принятых данных
-    async def receive_data(self, reader: asyncio.StreamReader) -> dict:
-        """
-        Асинхронно получает и обрабатывает данные от клиента.
-
-        Этот метод читает данные, отправленные клиентом, декодирует их из формата
-        байт в строку, затем преобразует строку JSON в словарь Python.
-
-        Args:
-            reader (asyncio.StreamReader): Объект StreamReader для чтения данных от клиента.
-
-        Returns:
-            dict: Словарь, содержащий данные, полученные от клиента, или пустой словарь, если произошла ошибка.
-        """
+    async def receive_data(self) -> dict:
         try:
             # Чтение данных до символа новой строки
-            raw_data = await reader.readuntil(b'\n')
+            raw_data = await self.reader.readuntil(b'\n')
             logging.info(f"Raw data: {raw_data!r}")  # Вывод сырых данных
 
             # Декодирование данных из байтов в строку
@@ -270,7 +227,7 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
         # Клиент отключился до отправки новой строки
         except asyncio.IncompleteReadError:
             # Логируем информацию о клиенте, который отключился
-            client_address = reader.get_extra_info('peername')
+            client_address = self.reader.get_extra_info('peername')
             logging.info("Client disconnected before sending a newline.")
             # Отключаем клиента методом
             await self.client_disconnect(client_address)
@@ -287,16 +244,6 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
             return {}
 
     async def insert_data(self, query: str, *args) -> None:
-        """
-        Выполняет SQL-запрос с заданными аргументами.
-
-        Этот метод асинхронно подключается к базе данных, выполняет предоставленный SQL-запрос
-        с аргументами и затем закрывает соединение.
-
-        Args:
-            query (str): Строка SQL-запроса для выполнения.
-            args: Аргументы, которые необходимо передать в SQL-запрос.
-        """
         try:
             logging.info("Connecting to DB...")
             conn = await asyncpg.connect(**self.database_config)
@@ -313,16 +260,7 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
             logging.info("DB connection closed.")
 
     async def insert_query(self, table: str, data: dict) -> str:
-        """
-        Генерирует SQL-запрос INSERT.
-
-        Args:
-        table (str): Название таблицы в базе данных.
-        data (dict): Словарь с данными для вставки.
-
-        Returns:
-        str: Строка SQL-запроса для вставки данных.
-        """
+        
         # Исключаем ключ 'header' из словаря
         filtered_data = {k: v for k, v in data.items() if k != "header"}
 
@@ -334,17 +272,7 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
         return insert_query
 
     async def update_query(self, table: str, data: dict, unique_key: str) -> str:
-        """
-        Генерирует SQL-запрос UPDATE.
-
-        Args:
-        table (str): Название таблицы в базе данных.
-        data (dict): Словарь с данными для обновления.
-        unique_key (str): Ключ для проверки уникальности записи.
-
-        Returns:
-        str: Строка SQL-запроса для обновления данных.
-        """
+        
         # Исключаем ключ 'header' и unique_key из словаря
         filtered_data = {k: v for k, v in data.items() if k != "header" and k != unique_key}
 
@@ -355,16 +283,7 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
 
     # Обработка отключения клиента
     async def client_disconnect(self, client_address: Tuple[str, int]) -> None:
-        """
-        Обрабатывает отключение клиента.
-
-        Этот метод закрывает StreamWriter для указанного клиента и удаляет его из словаря
-        активных подключений сервера. Если клиент уже был отключен или не найден, 
-        записывает соответствующее сообщение в лог.
-
-        Args:
-            client_address (Tuple[str, int]): Адрес клиента в формате (IP, порт).
-        """
+        
         # Находим client_id по адресу
         client_id = next((id for id, writer in self.active_connections.items() 
                           if writer.get_extra_info('peername') == client_address), None)
@@ -379,19 +298,6 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
             del self.active_connections[client_id]
         else:
             logging.info(f"Client at {client_address} already disconnected or not found.")
-
-    # async def fetch_record(self, record_id: int) -> dict:
-    #     try:
-    #         conn = await asyncpg.connect(**self.database_config)
-    #         record = await conn.fetchrow(
-    #             'SELECT * FROM main_solar_panel WHERE id = $1',
-    #             record_id
-    #         )
-    #         # Конвертируем Record в словарь перед возвращением
-    #         return dict(record) if record else {}
-    #     except Exception as e:
-    #         self.log_exception(e)
-    #         return {}
-
+            
     def log_exception(self, exception: Exception) -> None:
         logging.exception(f"An exception occurred: {exception}")
