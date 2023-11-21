@@ -6,9 +6,10 @@ import AbstractTCP
 import logging
 from typing import Any, Dict
 
+#todo stop_server, отправка данных
+
+
 # Класс TCP Сервера
-
-
 class TCPServer(AbstractTCP.AbstractTCPServer):
     def __init__(self, host: str, port: int, database_config: Dict[str, Any]):
         super().__init__(host, port, database_config)
@@ -50,7 +51,7 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         writer = self.connection_id_mapping.get(self.current_connection_id)
         if writer:
             try:
-                writer.write(json.dumps(message).encode('utf-8'))
+                writer.write(message.encode('utf-8'))
                 await writer.drain()
             except Exception as e:
                 logging.error(f"Error sending message to client ID {
@@ -88,13 +89,20 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
                     # небольшая задержка перед следующей итерацией
                     await asyncio.sleep(1)
                     continue  # Продолжить ожидание новых данных
-
-                table = "main_characteristics" if "generated_power" in client_data else "main_solar_panel"
-                unique_key = "id"
-
-                sql_query = await connection.check_query(table, client_data, unique_key)
+                logging.info(f"Received data from client {client_id} (Address: {address}): {client_data}")
+                sql_query = None
+                if client_data.get("header") == "update":
+                    table="main_characteristics"
+                    unique_key="id" 
+                    sql_query=await connection.update_query(table, client_data, unique_key)
+                elif client_data.get("header") == "response":
+                    table="solar_statement"
+                    unique_key="id"
+                    sql_query=await connection.insert_query(table, client_data, unique_key)
+                
                 if sql_query:
                     await connection.insert_data(sql_query)
+                    logging.info(f"SQL query executed:{sql_query}")
 
         except Exception as e:
             logging.error(f"Error handling client {client_id}: {e}")
@@ -185,7 +193,7 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
 
                 # Вставка и отправка данных
                 await self.insert_data(data)
-                record = await self.fetch_record(data['installation_number'])
+                record = await self.fetch_record(data['id'])
                 await self.send_record(client_id, record, server)
 
         except Exception as e:
@@ -250,10 +258,13 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
             json_data = json.loads(decoded_data)
             logging.info(f"JSON data: {json_data}")  # Вывод JSON данных
             return json_data
-
+        # Клиент отключился до отправки новой строки
         except asyncio.IncompleteReadError:
-            # Клиент отключился до отправки новой строки
+            # Логируем информацию о клиенте, который отключился
+            client_address = reader.get_extra_info('peername')
             logging.info("Client disconnected before sending a newline.")
+            # Отключаем клиента методом
+            await self.client_disconnect(client_address)
             return {}
 
         except json.JSONDecodeError as e:
@@ -292,47 +303,49 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
             await conn.close()
             logging.info("DB connection closed.")
 
-    async def check_query(self, table: str, data: dict, unique_key: str) -> (str, list):
+    async def insert_query(self, table: str, data: dict) -> str:
         """
-        Генерирует SQL-запрос INSERT или UPDATE в зависимости от наличия записи в базе данных.
+        Генерирует SQL-запрос INSERT.
 
         Args:
         table (str): Название таблицы в базе данных.
-        data (dict): Словарь с данными для вставки или обновления.
-        unique_key (str): Ключ для проверки уникальности записи (обычно это ID).
+        data (dict): Словарь с данными для вставки.
 
         Returns:
-        tuple: Пара (строка SQL-запроса, список аргументов для запроса).
+        str: Строка SQL-запроса для вставки данных.
         """
-        try:
-            conn = await asyncpg.connect(**self.database_config)
-            logging.info(f"Checking for existing record in {
-                         table} with {unique_key} = {data[unique_key]}")
-            result = await conn.fetchrow(f"SELECT * FROM {table} WHERE {unique_key} = {data[unique_key]}")
-            await conn.close()
+        # Исключаем ключ 'header' из словаря
+        filtered_data = {k: v for k, v in data.items() if k != "header"}
 
-            if result:
-                update_parts = [f"{key} = '{
-                    data[key]}'" for key in data if key != unique_key]
-                update_query = f"UPDATE {table} SET {', '.join(update_parts)} WHERE {
-                    unique_key} = {data[unique_key]}"
-                logging.info(f"Generated UPDATE query: {update_query}")
-                return update_query
-            else:
-                columns = ', '.join(data.keys())
-                values = ', '.join([f"'{data[key]}'" for key in data])
-                insert_query = f"INSERT INTO {
-                    table} ({columns}) VALUES ({values})"
-                logging.info(f"Generated INSERT query: {insert_query}")
-                return insert_query
-        except Exception as e:
-            self.log_exception(e)
-            logging.error(f"Error in check_query: {e}")
-            return ""
+        columns = ', '.join(filtered_data.keys())
+        values = ', '.join([f"'{v}'" for v in filtered_data.values()])
+
+        insert_query = f"INSERT INTO {table} ({columns}) VALUES ({values})"
+        logging.info(f"Generated INSERT query: {insert_query}")
+        return insert_query
+
+    async def update_query(self, table: str, data: dict, unique_key: str) -> str:
+        """
+        Генерирует SQL-запрос UPDATE.
+
+        Args:
+        table (str): Название таблицы в базе данных.
+        data (dict): Словарь с данными для обновления.
+        unique_key (str): Ключ для проверки уникальности записи.
+
+        Returns:
+        str: Строка SQL-запроса для обновления данных.
+        """
+        # Исключаем ключ 'header' и unique_key из словаря
+        filtered_data = {k: v for k, v in data.items() if k != "header" and k != unique_key}
+
+        update_parts = [f"{key} = '{value}'" for key, value in filtered_data.items()]
+        update_query = f"UPDATE {table} SET {', '.join(update_parts)} WHERE {unique_key} = '{data[unique_key]}'"
+        logging.info(f"Generated UPDATE query: {update_query}")
+        return update_query
 
     # Обработка отключения клиента
-
-    async def client_disconnect(self, client_id: str, server: TCPServer) -> None:
+    async def client_disconnect(self, client_address: Tuple[str, int]) -> None:
         """
         Обрабатывает отключение клиента.
 
@@ -341,35 +354,35 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
         записывает соответствующее сообщение в лог.
 
         Args:
-            client_id (str): Уникальный идентификатор клиента, который необходимо отключить.
-            server (TCPServer): Экземпляр сервера, содержащий информацию о всех активных подключениях.
+            client_address (Tuple[str, int]): Адрес клиента в формате (IP, порт).
         """
-        writer = server.active_connections.get(client_id)
-        if writer is None:
-            logging.info(
-                f"Client {client_id} already disconnected or not found.")
-            return
+        # Находим client_id по адресу
+        client_id = next((id for id, writer in self.active_connections.items() 
+                          if writer.get_extra_info('peername') == client_address), None)
 
-        writer.close()
-        await writer.wait_closed()
-        logging.info(f"Client {client_id} has disconnected.")
+        if client_id:
+            writer = self.active_connections[client_id]
+            writer.close()
+            await writer.wait_closed()
+            logging.info(f"Client {client_id} at {client_address} has been disconnected and removed.")
 
-        # Удаляем клиента из словаря активных подключений
-        if client_id in server.active_connections:
-            del server.active_connections[client_id]
+            # Удаляем клиента из словаря активных подключений
+            del self.active_connections[client_id]
+        else:
+            logging.info(f"Client at {client_address} already disconnected or not found.")
 
-    async def fetch_record(self, record_id: int) -> dict:
-        try:
-            conn = await asyncpg.connect(**self.database_config)
-            record = await conn.fetchrow(
-                'SELECT * FROM main_solar_panel WHERE installation_number = $1',
-                record_id
-            )
-            # Конвертируем Record в словарь перед возвращением
-            return dict(record) if record else {}
-        except Exception as e:
-            self.log_exception(e)
-            return {}
+    # async def fetch_record(self, record_id: int) -> dict:
+    #     try:
+    #         conn = await asyncpg.connect(**self.database_config)
+    #         record = await conn.fetchrow(
+    #             'SELECT * FROM main_solar_panel WHERE id = $1',
+    #             record_id
+    #         )
+    #         # Конвертируем Record в словарь перед возвращением
+    #         return dict(record) if record else {}
+    #     except Exception as e:
+    #         self.log_exception(e)
+    #         return {}
 
     def log_exception(self, exception: Exception) -> None:
         logging.exception(f"An exception occurred: {exception}")

@@ -3,51 +3,45 @@ import json
 from datetime import datetime
 import random
 
-async def tcp_client(host, port, message):
-    try:
-        reader, writer = await asyncio.open_connection(host, port)
-        
-        # Сериализуем сообщение в JSON и добавляем символ новой строки
-        json_message = json.dumps(message) + '\n'
-        print(f'Send: {json_message}')
-        writer.write(json_message.encode())
-
-        while True:
-            # Чтение ответа от сервера
-            data = await reader.read(4096)  # Буфер достаточного размера для чтения ответа
-            if not data:
-                print('The server closed the connection')
-                break
-            response = data.decode()
-            print(f'Received: {response}')
-
-            # Проверяем, содержит ли ответ сообщение о выключении сервера
-            if "shutdown" in response:
-                print("Received shutdown signal from server.")
-                break
-
-    except asyncio.CancelledError:
-        # Задача была отменена, закрываем соединение
-        print('Client is shutting down.')
-    except Exception as e:
-        print(f'An error occurred: {e}')
-    finally:
-        print('Close the connection')
-        writer.close()
-        await writer.wait_closed()
-
-async def main(server_host, server_port, client_data):
-    # Запускаем клиент
-    task = asyncio.create_task(tcp_client(server_host, server_port, client_data))
+async def send_data_to_server(host, port, message):
+    reader, writer = await asyncio.open_connection(host, port)
     
-    try:
-        # Ожидаем завершения задачи
-        await task
-    except KeyboardInterrupt:
-        # Пользователь нажал Ctrl+C, отменяем задачу
-        print('Caught keyboard interrupt, cancelling tasks...')
-        task.cancel()
-        await task
+    # Отправляем начальное сообщение
+    json_message = json.dumps(message) + '\n'
+    print(f'Send: {json_message}')
+    writer.write(json_message.encode())
+
+    while True:
+        # Чтение ответа от сервера
+        data = await reader.read(4096)
+        if not data:
+            print('The server closed the connection')
+            break
+        response = data.decode()
+        print(f'Received: {response}')
+
+        # Ввод команды пользователем
+        print("Enter command (up, down, left, right, reset, shutdown, exit to stop): ")
+        command = input()
+
+        # Обработка команды shutdown и выхода
+        if command.lower() in ["shutdown", "exit"]:
+            break
+
+        # Формирование и отправка сообщения
+        response_message = {
+            "header": "response",
+            "command": command,
+            "statement": "User command",
+            "solar_id_id": installation_number,
+            "date": datetime.now().strftime("%Y-%m-%d")
+        }
+        writer.write(json.dumps(response_message).encode() + b'\n')
+        await writer.drain()
+        print(f'Sent: {response_message}')
+
+    writer.close()
+    await writer.wait_closed()
 
 if __name__ == "__main__":
     server_host = '127.0.0.1'
@@ -69,6 +63,7 @@ if __name__ == "__main__":
         exit(1)
     
     client_data = {
+        "header": "update",
         "id": installation_number,
         "date": current_date,
         "time": current_time,
@@ -79,4 +74,4 @@ if __name__ == "__main__":
         "solar_panel_id": installation_number
     }
 
-    asyncio.run(main(server_host, server_port, client_data))
+    asyncio.run(send_data_to_server(server_host, server_port, client_data))
