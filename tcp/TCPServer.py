@@ -72,12 +72,11 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
             reader (asyncio.StreamReader): Объект для чтения данных от клиента.
             writer (asyncio.StreamWriter): Объект для отправки данных клиенту.
         """
-
         client_id = self.next_client_id
         self.next_client_id += 1
         self.connection_id_mapping[client_id] = writer
-
         address = writer.get_extra_info('peername')
+        
         logging.info(f"New client connected: {client_id} (Address: {address})")
 
         try:
@@ -89,16 +88,26 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
                     # небольшая задержка перед следующей итерацией
                     await asyncio.sleep(1)
                     continue  # Продолжить ожидание новых данных
-                logging.info(f"Received data from client {client_id} (Address: {address}): {client_data}")
-                sql_query = None
+                
+                # Извлекаем id из client_data
+                client_id_value = client_data.get('id')
+
+                # Формируем словарь с адресом и id
+                address_dict = {
+                "id": client_id_value,
+                "ip_address": address[0],
+                "port": address[1]
+                }
+                
                 if client_data.get("header") == "update":
+                    sql_query=await connection.update_query("main_solar_panel", address_dict, "id")
+                    await connection.insert_data(sql_query)
                     table="main_characteristics"
                     unique_key="id" 
                     sql_query=await connection.update_query(table, client_data, unique_key)
                 elif client_data.get("header") == "response":
                     table="solar_statement"
-                    unique_key="id"
-                    sql_query=await connection.insert_query(table, client_data, unique_key)
+                    sql_query=await connection.insert_query(table, client_data)
                 
                 if sql_query:
                     await connection.insert_data(sql_query)

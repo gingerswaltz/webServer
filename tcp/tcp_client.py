@@ -1,47 +1,36 @@
-import asyncio
+import socket
 import json
 from datetime import datetime
 import random
 
-async def send_data_to_server(host, port, message):
-    reader, writer = await asyncio.open_connection(host, port)
-    
-    # Отправляем начальное сообщение
-    json_message = json.dumps(message) + '\n'
-    print(f'Send: {json_message}')
-    writer.write(json_message.encode())
+def send_data_to_server(host, port, message):
+    # Создаем соединение
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((host, port))
+        # Отправляем начальное сообщение
+        json_message = json.dumps(message) + '\n'
+        print(f'Send: {json_message}')
+        s.sendall(json_message.encode())
 
-    while True:
-        # Чтение ответа от сервера
-        data = await reader.read(4096)
-        if not data:
-            print('The server closed the connection')
-            break
-        response = data.decode()
-        print(f'Received: {response}')
+        while True:
+            # Ввод команды пользователем
+            print("Enter command (up, down, left, right, reset, shutdown, exit to stop): ")
+            command = input()
 
-        # Ввод команды пользователем
-        print("Enter command (up, down, left, right, reset, shutdown, exit to stop): ")
-        command = input()
+            # Обработка команды shutdown и выхода
+            if command.lower() in ["shutdown", "exit"]:
+                break
 
-        # Обработка команды shutdown и выхода
-        if command.lower() in ["shutdown", "exit"]:
-            break
-
-        # Формирование и отправка сообщения
-        response_message = {
-            "header": "response",
-            "command": command,
-            "statement": "User command",
-            "solar_id_id": installation_number,
-            "date": datetime.now().strftime("%Y-%m-%d")
-        }
-        writer.write(json.dumps(response_message).encode() + b'\n')
-        await writer.drain()
-        print(f'Sent: {response_message}')
-
-    writer.close()
-    await writer.wait_closed()
+            # Формирование и отправка сообщения
+            response_message = {
+                "header": "response",
+                "command": command,
+                "statement": str(bool(random.uniform(1, 0))),
+                "solar_panel_id": installation_number,
+                "date": datetime.now().strftime("%Y-%m-%d")
+            }
+            s.sendall(json.dumps(response_message).encode() + b'\n')
+            print(f'Sent: {response_message}')
 
 if __name__ == "__main__":
     server_host = '127.0.0.1'
@@ -74,4 +63,4 @@ if __name__ == "__main__":
         "solar_panel_id": installation_number
     }
 
-    asyncio.run(send_data_to_server(server_host, server_port, client_data))
+    send_data_to_server(server_host, server_port, client_data)

@@ -10,7 +10,7 @@ class Solar_Panel(models.Model):
         ordering = ['-id']
 
     def __str__(self):
-        return str(self.installation_number)
+        return str(self.id)
 
 
 class Characteristics(models.Model):
