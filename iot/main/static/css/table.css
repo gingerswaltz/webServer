@@ -5,6 +5,7 @@ table {
     background-color: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Добавим тень для поднятия таблицы */
     border-radius: 5px; /* Закруглим углы таблицы */
+    
 }
 
 th, td {
@@ -25,4 +26,5 @@ tr:nth-child(even) {
 .table-container {
     max-width: 100%; /* Убираем ограничение максимальной ширины */
     margin: 20px; /* Добавим отступы для выравнивания таблицы */
+
 }

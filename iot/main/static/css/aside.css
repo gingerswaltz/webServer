@@ -12,7 +12,6 @@
   --toggle-color: #DDD;
   --text-color: #707070;
 
-  --tran-03: all 0.2s ease;
   --tran-03: all 0.3s ease;
   --tran-04: all 0.4s ease;
   --tran-05: all 0.5s ease;
@@ -27,6 +26,9 @@ body{
   font-size: 16px;
   font-weight: 500;
   color: var(--text-color);
+  white-space: nowrap; /* Предотвращает перенос текста на новую строку */
+  overflow: hidden;    /* Скрывает текст, выходящий за границы */
+  text-overflow: ellipsis; /* Добавляет многоточие в конце обрезанного текста */
 }
 
 .sidebar.close .text{
@@ -99,6 +101,25 @@ header .image-text .header-text{
   font-weight: 600;
 }
 
+/* Состояние заголовка после закрытия панели навигации */
+.sidebar .text {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+/* Состояние заголовка после открытия панели навигации */
+.sidebar:not(.close) .header-text {
+  opacity: 1;
+}
+
+/* Состояние текста после открытия панели навигации */
+.sidebar:not(.close) .text {
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+
+/* Основной стиль для кнопки переключения */
 .sidebar header .toggle{
   position: absolute;
   top: 50%;
@@ -113,8 +134,12 @@ header .image-text .header-text{
   border-radius: 50%;
   color: var(--sidebar-color);
   font-size: 22px;
+  transition: transform 0.3s ease; /* Плавный переход для анимации */
 }
-
+/* Стиль для поворота иконки при открытом `aside` */
+.sidebar:not(.close) header .toggle {
+  transform: translateY(-50%) rotate(180deg); /* Добавляет поворот на 180 градусов */
+}
 .sidebar li a {
   height: 100%;
   width: 100%;

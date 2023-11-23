@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>SP Management</title>
     
     <link rel="stylesheet" href="{% static 'css/aside.css'%}">
 
@@ -48,6 +48,12 @@
                             <span class="text nav-text">Панели</span>
                         </a>
                     </li>
+                    <li class="nav-link">
+                        <a href="{% url 'socket' %}">
+                            <i class='bx bx-planet icon'></i>
+                            <span class="text nav-text">Управление</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -56,5 +62,70 @@
     <main>
         {% block content %}{% endblock %}
     </main>
+{% block extra_js %}
+   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+    function getClients() {
+        $.ajax({
+            url: '/get_clients/',
+            type: 'GET',
+            
+            success: function(response) {
+                alert(JSON.stringify(response));
+
+                ar clientListHtml = "";
+                // Предполагаем, что response - это массив объектов клиентов
+                $.each(response, function(i, client) {
+                    // Добавление информации о клиенте в формате JSON к HTML
+                    var clientInfo = JSON.stringify(client);
+                    clientListHtml += "<li>" + clientInfo + "</li>"; // Или любой другой шаблон отображения
+                });
+                $("#client-list-ul").html(clientListHtml); // Добавляем список в ul элемент
+            },
+            error: function() {
+                $("#response").html("Ошибка при получении списка клиентов");
+            }
+        });
+    }
+});
+
+        $(document).on('dblclick', '#client-list-ul li', function() {
+            var clientId = $(this).data('client-id');
+            setActiveClient(clientId);
+        });
+
+        function setActiveClient(clientId) {
+            $.ajax({
+                url: '/set_active_client/',
+                type: 'POST',
+                data: { client_id: clientId },
+                success: function(response) {
+                    alert("Активный клиент установлен");
+                },
+                error: function() {
+                    alert("Ошибка при установке активного клиента");
+                }
+            });
+        }
+
+        $('#sendMessage').click(function() {
+            var message = $('#message').val();
+            $.ajax({
+                url: '/send_message/',
+                type: 'POST',
+                data: { message: message },
+                success: function(response) {
+                    alert("Сообщение отправлено");
+                },
+                error: function() {
+                    alert("Ошибка при отправке сообщения");
+                }
+            });
+        });
+
+        getClients(); // Вызов функции при загрузке страницы
+</script>
+{% endblock %}
 </body>
 </html>

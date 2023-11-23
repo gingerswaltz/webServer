@@ -1,0 +1,55 @@
+
+#container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#output {
+    flex: 1;
+    border: 2px solid black;
+    margin: 8px;
+}
+
+#sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    height: 100%;
+}
+
+#client-list {
+    flex: 1;
+    border: 2px solid red;
+    width: 200px;
+    margin: 8px;
+    overflow-y: auto;
+}
+
+#send {
+    border: 2px solid red;
+    width: 200px;
+    margin: 8px;
+}
+
+#input {
+    border: 2px solid purple;
+    margin: 8px;
+    padding: 8px;
+}
+
+@media (min-width: 768px) {
+    #container {
+        flex-direction: row;
+    }
+
+    #input {
+        flex: none;
+        order: -1;
+        width: 100%;
+    }
+
+    #output, #sidebar {
+        flex: 1;
+    }
+}

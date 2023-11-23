@@ -7,8 +7,6 @@ import AbstractTCP
 import logging
 from typing import Any, Dict
 
-#todo разобраться почему не возвращается список подключений
-
 # Класс TCP Сервера
 class TCPServer(AbstractTCP.AbstractTCPServer):
     def __init__(self, host: str, port: int, database_config: Dict[str, Any]):
@@ -34,7 +32,7 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         """ Устанавливает активное подключение по ID. """
         writer = self.connections_mapping.get(int(client_id))
         if writer:
-            self.current_connection_id = client_id
+            self.current_connection_id = int(client_id)
             logging.info(f"Active connection set to ID {client_id}")
         else:
             logging.error(f"Client ID {client_id} not found")
