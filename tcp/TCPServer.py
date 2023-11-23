@@ -121,9 +121,6 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         if old_id in self.connections_mapping:
             self.connections_mapping[new_id] = self.connections_mapping.pop(old_id)
         
-        if old_id in self.connections_mapping:
-            self.connections_mapping[new_id] = self.connections_mapping.pop(old_id)
-        
         if old_id in self.active_connections:
             self.active_connections[new_id] = self.active_connections.pop(old_id)
 
@@ -314,11 +311,11 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
             self.log_exception(f"An exception occurred: {e}")
 
     async def insert_data(self, query: str, *args) -> None:
+        
         try:
             logging.info("Connecting to DB...")
             conn = await asyncpg.connect(**self.database_config)
             logging.info("Connected to DB. Executing query...")
-
             # Выполнение SQL-запроса
             await conn.execute(query, *args)
             logging.info("Query executed successfully.")

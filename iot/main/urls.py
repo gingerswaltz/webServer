@@ -12,6 +12,9 @@ urlpatterns = [
     path('table/', views.char_table, name='table' ),
     path('panels/', views.solar_panels, name='panels'),
     path('characteristics-data/', characteristics_data, name='characteristics-data'),
+    path('get_clients/', views.get_connected_clients, name='get_clients'),
+    path('set_active_client/', views.set_active_client, name='set_active_client'),
+    path('send_message/', views.send_message_to_client, name='send_message'),
 ]
 
 

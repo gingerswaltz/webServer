@@ -1,5 +1,5 @@
 import requests
-
+import sys
 
 SERVER_URL = "http://127.0.0.1:8080"
 
@@ -24,33 +24,31 @@ def send_message_to_client(message):
     else:
         print("Ошибка при отправке сообщения")
 
-def stop_server():
-    response = requests.post(f"{SERVER_URL}/stop_server")
-    if response.ok:
-        print("Сервер остановлен")
-    else:
-        print("Ошибка при остановке сервера")
 
 def user_interface():
-    while True:
-        print("\nДоступные команды:")
-        print("1: Показать список подключенных клиентов")
-        print("2: Выбрать клиента для отправки сообщения")
-        print("3: Отправить сообщение выбранному клиенту")
-        print("4: Остановить сервер и выйти")
-        choice = input("Введите команду: ")
+    try:
+        while True:
+            print("\nДоступные команды:")
+            print("1: Показать список подключенных клиентов")
+            print("2: Выбрать клиента для отправки сообщения")
+            print("3: Отправить сообщение выбранному клиенту")
+            choice = input("Введите команду: ")
 
-        if choice == '1':
-            get_connected_clients()
-        elif choice == '2':
-            client_id = input("Введите ID клиента: ")
-            set_active_client(client_id)
-        elif choice == '3':
-            message = input("Введите сообщение: ")
-            send_message_to_client(message)
-        elif choice == '4':
-            stop_server()
-            break
+            if choice == '1':
+                get_connected_clients()
+            elif choice == '2':
+                client_id = input("Введите ID клиента: ")
+                set_active_client(int(client_id))
+            elif choice == '3':
+                message = input("Введите сообщение: ")
+                send_message_to_client(message)
+    except Exception as e:
+        print(e)
+    finally:
+        sys.exit(0);
 
 if __name__ == "__main__":
-    user_interface()
+    try:
+        user_interface()
+    except Exception as e:
+        print(e)
