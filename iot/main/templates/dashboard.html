@@ -1,79 +1,8 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Главная страница{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="../static/main/css/dashboard.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<div class="chart-container">
-    <canvas id="characteristicsChart" width="20" height="20" style="height: 600; width: 600;"></canvas>
-    <script src="../static/main/js/chart.js"></script>
-</div>
-
-<label for="selected_panel">Select Solar Panel:</label>
-    <select name="selected_panel" id="selected_panel" onchange="fetchData()">
-        <option value="all">All Panels</option>
-        {% for panel in solar_panels %}
-            <option value="{{ panel.installation_number }}">{{ panel.installation_number }}</option>
-        {% endfor %}
-    </select>
-
-    <div id="data_display">
-        <!-- Data will be displayed here -->
-    </div>
-
-    <script>
-        function fetchData() {
-            var selectedPanel = $('#selected_panel').val();
-            $.ajax({
-                url: '{% url 'home' %}',
-                data: {
-                    'selected_panel': selectedPanel
-                },
-                dataType: 'json',
-                success: function (response) {
-                    var data = JSON.parse(response.data);
-                    var html = '';
-                    for (var i = 0; i < data.length; i++) {
-                        html += '<p>Date: ' + data[i].fields.date + '</p>';
-                        html += '<p>Time: ' + data[i].fields.time + '</p>';
-                        // ... add other fields similarly
-                    }
-                    $('#data_display').html(html);
-                }
-            });
-        }
-    </script>
-   
-
-<div class='panel-table-container'>
-    <table>
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>ip</th>
-                <th>порт</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for panel in panels %}
-                <tr>
-                    <td>{{ panel.installation_number }}</td>
-                    <td>{{ panel.ip_address }}</td>
-                    <td>{{ panel.port }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="3">Нет данных</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-
-
 
 {% endblock %}
