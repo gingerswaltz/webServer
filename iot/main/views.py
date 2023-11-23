@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django import forms
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView
@@ -11,8 +11,23 @@ SERVER_URL = 'http://127.0.0.1:8080'  # адрес сервера
 from django.views.generic import TemplateView
 
 
-class Dashboard(TemplateView):
-    template_name = 'dashboard.html'
+def dashboard(request):
+    solar_panels = Solar_Panel.objects.all()
+
+    # Check if it's an AJAX request
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        selected_panel_number = request.GET.get('selected_panel')
+        if selected_panel_number == "all":
+            characteristics = Characteristics.objects.all().order_by('-date', 'time')
+        else:
+            selected_panel = Solar_Panel.objects.get(installation_number=selected_panel_number)
+            characteristics = Characteristics.objects.filter(solar_panel=selected_panel).order_by('-date', 'time')
+
+        # Serializing queryset to JSON
+        data = serializers.serialize('json', characteristics)
+        return JsonResponse({'data': data})
+
+    return render(request, 'dashboard.html', {'solar_panels': solar_panels})
 
 
 def get_characteristics_data(request, installation_number):
@@ -33,11 +48,6 @@ def char_table(request):
 def solar_panels(request):
     solar = Solar_Panel.objects.all()
     return render(request, "panels.html", {'panels': solar})
-
-
-def panel_detail(request, pk):
-    panels = get_object_or_404(Solar_Panel, pk=pk)
-    return render(request, 'panel_detail.html', {'panel': panels})
 
 
 def characteristics_data(request):
