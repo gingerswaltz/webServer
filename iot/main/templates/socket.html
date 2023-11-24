@@ -1,7 +1,4 @@
-<!-- не работает если включить base.html. 
-вероятнее всего из за того что
-там нет блока extra js -->
-
+{% extends "base.html" %}
 {% block content %}
 <!DOCTYPE html>
 <html lang="en">
@@ -12,51 +9,95 @@
     <style>
         body { font-family: Arial, sans-serif; }
         .container { width: 300px; margin: auto; margin-top: 50px; }
-        input, button { width: 100%; padding: 10px; margin-top: 10px; }
+        input, button, textarea, .client-list { width: 100%; padding: 10px; margin-top: 10px; }
+        textarea { height: 200px; }
+        .client-list-item { display: flex; align-items: center; }
+        .client-list-item label { margin-left: 5px; } /* Добавить отступ слева от текста */
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Test TCP Server</h2>
         <button id="getClients">Получить список клиентов</button>
+        <div class="client-list" id="clientList"></div> <!-- Контейнер для списка клиентов с чекбоксами -->
         <input type="text" id="clientId" placeholder="ID клиента">
         <button id="setActiveClient">Установить активного клиента</button>
         <input type="text" id="message" placeholder="Сообщение">
         <button id="sendMessage">Отправить сообщение</button>
+        <textarea id="memo" readonly></textarea>
         <div id="response"></div>
     </div>
 {% endblock %}
 
-
 {% block extra_js %}
     <script>
-        $("#getClients").click(function() {
-            $.ajax({
-                url: '/get_clients/',
-                type: 'GET',
-                success: function(response) {
-                    $("#response").html(JSON.stringify(response));
-                },
-                error: function() {
-                    $("#response").html("Ошибка при получении списка клиентов");
-                }
-            });
-        });
+        function appendToMemo(text) {
+            var $memo = $("#memo");
+            $memo.val($memo.val() + text + "\n"); // Добавляем текст с новой строки
+            $memo.scrollTop($memo[0].scrollHeight); // Прокручиваем вниз до последнего сообщения
+        }
+        
+       function populateClientsList(clientsObj) {
+    var $clientList = $('#clientList');
+    $clientList.empty(); // Очищаем список, если в нем уже что-то есть
 
-        $("#setActiveClient").click(function() {
-            var clientId = $("#clientId").val();
-            $.ajax({
-                url: '/set_active_client/',
-                type: 'POST',
-                data: { "client_id": clientId },
-                success: function(response) {
-                    $("#response").html(response.message);
-                },
-                error: function() {
-                    $("#response").html("Ошибка при установке активного клиента");
-                }
-            });
+    Object.entries(clientsObj).forEach(function([clientId, clientDetails]) {
+        var $item = $('<div class="client-list-item">');
+        var $button = $('<button class="client-button">').text(clientDetails.join(" - ")).click(function() {
+            // При нажатии кнопки устанавливаем активного клиента
+            setActiveClient(clientId);
         });
+        $item.append($button);
+        $clientList.append($item);
+    });
+}
+
+
+$("#getClients").click(function() {
+    $.ajax({
+        url: '/get_clients/',
+        type: 'GET',
+        success: function(response) {
+            var clients;
+            try {
+                clients = typeof response === 'string' ? JSON.parse(response) : response;
+            } catch (error) {
+                console.error("Ошибка при разборе ответа сервера:", error);
+                appendToMemo("Ошибка при разборе ответа сервера: " + error.message);
+                return;
+            }
+            
+            if(typeof clients === 'object' && clients !== null) {
+                populateClientsList(clients); // Добавляем клиентов в список
+                var formattedResponse = JSON.stringify(clients, null, 4);
+                appendToMemo(formattedResponse); // Выводим в Memo
+            } else {
+                console.error("Ответ сервера не является объектом:", clients);
+                appendToMemo("Ответ сервера не является объектом: " + JSON.stringify(clients));
+            }
+        },
+        error: function() {
+            appendToMemo("Ошибка при получении списка клиентов");
+        }
+    });
+});
+
+
+
+        function setActiveClient(clientId) {
+    // Здесь может быть вызов AJAX для установки активного клиента на сервере
+    $.ajax({
+        url: '/set_active_client/',
+        type: 'POST',
+        data: { "client_id": clientId },
+        success: function(response) {
+            appendToMemo("Активный клиент установлен: " + clientId);
+        },
+        error: function() {
+            appendToMemo("Ошибка при установке активного клиента");
+        }
+    });
+}
 
         $("#sendMessage").click(function() {
             var message = $("#message").val();
@@ -65,15 +106,12 @@
                 type: 'POST',
                 data: { "message": message },
                 success: function(response) {
-                    $("#response").html(response.message);
+                    appendToMemo(response.message); // Выводим в Memo
                 },
                 error: function() {
-                    $("#response").html("Ошибка при отправке сообщения");
+                    appendToMemo("Ошибка при отправке сообщения");
                 }
             });
         });
     </script>
-</body>
-</html>
 {% endblock %}
-

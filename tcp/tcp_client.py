@@ -30,7 +30,7 @@ def send_data_to_server(host, port, message):
                 response_message = {
                     "header": "response",
                     "command": command,
-                    "statement": str(bool(random.uniform(0, 1))),
+                    "statement": str(bool(random.uniform(0, 1.1))),
                     "solar_panel_id": installation_number,
                     "date": datetime.now().strftime("%Y-%m-%d")
                 }
