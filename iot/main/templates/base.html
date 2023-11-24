@@ -58,11 +58,10 @@
             </div>
         </div>
     </nav>
-    <script src="{% static 'js/main.js' %}"></script>
-    <div class="main-content close">
-    <main>
+    
+    <main class="main-content close">
         {% block content %}{% endblock %}
     </main>
-    </div>
+    <script src="{% static 'js/main.js' %}"></script>
 </body>
 </html>

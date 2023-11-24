@@ -164,6 +164,11 @@ header .image-text .header-text{
 
 /* ===== main ===== */
 
-.container{
-  padding-left: 260px; 
+.main-content {
+  transition: margin-left var(--tran-05); /* Добавляем плавное перемещение */
+  margin-left: 250px; /* Стандартное смещение равно ширине sidebar */
+}
+
+.main-content.close {
+  margin-left: 63px; /* Смещение при закрытом sidebar */
 }

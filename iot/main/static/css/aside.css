@@ -164,3 +164,17 @@ header .image-text .header-text{
 
 /* ===== main ===== */
 
+.main-content {
+  transition: margin-left 0.5s; 
+  margin-left: 300px; 
+  height: 100%;
+}
+
+.sidebar.close + .main-content {
+  margin-left: 120px; /* Смещение при закрытом sidebar */
+}
+
+.main-content.close + .sidebar.close {
+  margin: 40px 0 0 120px;
+  transition: margin-left var(--tran-03); 
+}
