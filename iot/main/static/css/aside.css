@@ -12,6 +12,9 @@
   --toggle-color: #DDD;
   --text-color: #707070;
 
+ 
+  --table-shadow-color: rgba(0, 0, 0, 0.15);
+
   --tran-03: all 0.3s ease;
   --tran-04: all 0.4s ease;
   --tran-05: all 0.5s ease;
@@ -20,7 +23,19 @@
 body{
   height: 100vh;
   background: var(--body-color);
+  transition: var(--tran-03);
 }
+
+body.dark{
+  --table-shadow-color: rgba(84, 84, 84, 0.15);
+  --body-color: #18191a;
+  --sidebar-color: #242526;
+  --primary-color: #3a3b3c;
+  --primary-color-light: #3a3b3c;
+  --toggle-color: #FFF;
+  --text-color: #CCC;
+}
+
 /*===== CSS =====*/
 .sidebar .text{
   font-size: 16px;
@@ -34,6 +49,8 @@ body{
 .sidebar.close .text{
   opacity: 0;
 }
+
+
 
 .sidebar .image{
   min-width: 60px;
@@ -113,6 +130,7 @@ header .image-text .header-text{
 }
 
 /* Состояние текста после открытия панели навигации */
+
 .sidebar:not(.close) .text {
   opacity: 1;
   transition: opacity 0.3s ease-in-out;
@@ -158,8 +176,71 @@ header .image-text .header-text{
   color: var(--sidebar-color);
 }
 
+
+.sidebar .menu-bar {
+  height: calc(100% - 50px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+
+.menu-bar .mode .moon-sun{
+  height: 50px;
+  width: 60px;
+  display: flex;
+  align-items: center;
+
+}
+.menu-bar .menu-text{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.menu-bar .mode i{
+  position: absolute;
+}
+
+.menu-bar .mode i.sun{
+  opacity: 0;
+}
+
+
+.menu-bar .mode .toggle-switch{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  cursor: pointer;
+
+}
+
+.toggle-switch .switch{
+  position: relative;
+  height: 22px;
+  width: 44px;
+  border-radius: 23px;
+  background: var(--toggle-color);
+}
+
 .sidebar ul {
   padding-left: 0;
+}
+.switch::before{
+  content: '';
+  position: absolute;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  top: 50%;
+  left: 5px;
+  transform: translateY(-50%);
+  background: var(--sidebar-color);
+  transition: var(--tran-03);
+}
+body.dark .switch::before{
+  left:25px;
 }
 
 /* ===== main ===== */
@@ -190,34 +271,36 @@ header .image-text .header-text{
   min-width: 400px;
   border-radius: 5px 5px 0 0;
   overflow: hidden;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 20px var(--table-shadow-color);
 }
 
 .content-table thead tr{
   background-color: var(--primary-color);
-  color:#fff;
+  color:#F6F5FF;
   text-align: center;
   font-weight: bold;
 }
 
 .content-table th,
 .content-table td {
-  padding: 12px 15px;
+  padding: 12px 12px;
+}
+.content-table tbody td {
+  text-align: center;
+  color: var(--text-color);
 }
 
 .content-table tbody tr {
-  border-bottom: 1px solid #dddddd;
+  border-bottom: 1px solid var(--primary-color-light);
 }
 
 .content-table tbody tr:nth-of-type(even) {
-  background-color: #f3f3f3;
+  background-color: var(--primary-color-light);
 }
 
-.content-table tbody tr:last-of-type {
-  border-bottom: 2px solid var(--primary-color);
-}
 
-.content-table tbody tr:active-row {
-  font-weight: bold;
-  color: #009879;
+.content-table .table-icon {
+  position: relative;
+  margin-top: 4px;
+  font-size: 1.3em;
 }

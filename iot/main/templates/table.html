@@ -8,13 +8,17 @@
     <table class ="content-table">
         <thead>
             <tr>
-                <th>Id</th>
-                <th>Поворот по горизонтали</a></th>
-                <th>Поворот по вертикали</a></th>
-                <th>Потребляемая мощность</th>
-                <th>Вырабатываемая мощность</th>
-                <th>Дата</th>
-                <th>Время</th>
+                <th>Id
+                    <select class="table-filter">
+                        <option value="{{ solar_panel}}"></option>
+                    </select>
+                </th>
+                <th>Поворот по горизонтали<i class='bx bx-chevron-down table-icon'></i></th>
+                <th>Поворот по вертикали<i class='bx bx-chevron-down table-icon'></i></th>
+                <th>Потребляемая мощность<i class='bx bx-chevron-down table-icon'></i></th>
+                <th>Вырабатываемая мощность<i class='bx bx-chevron-down table-icon'></i></th>
+                <th>Дата<i class='bx bx-chevron-down table-icon'></i></th>
+                <th>Время<i class='bx bx-chevron-down table-icon'></i></th>
             </tr>
         </thead>
         <tbody>
