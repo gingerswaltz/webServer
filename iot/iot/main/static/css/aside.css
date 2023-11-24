@@ -164,3 +164,6 @@ header .image-text .header-text{
 
 /* ===== main ===== */
 
+.container{
+  padding-left: 260px; 
+}

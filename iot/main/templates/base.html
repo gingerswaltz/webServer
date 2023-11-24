@@ -59,73 +59,10 @@
         </div>
     </nav>
     <script src="{% static 'js/main.js' %}"></script>
+    <div class="main-content close">
     <main>
         {% block content %}{% endblock %}
     </main>
-{% block extra_js %}
-   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    $(document).ready(function() {
-    function getClients() {
-        $.ajax({
-            url: '/get_clients/',
-            type: 'GET',
-            
-            success: function(response) {
-                alert(JSON.stringify(response));
-
-                ar clientListHtml = "";
-                // Предполагаем, что response - это массив объектов клиентов
-                $.each(response, function(i, client) {
-                    // Добавление информации о клиенте в формате JSON к HTML
-                    var clientInfo = JSON.stringify(client);
-                    clientListHtml += "<li>" + clientInfo + "</li>"; // Или любой другой шаблон отображения
-                });
-                $("#client-list-ul").html(clientListHtml); // Добавляем список в ul элемент
-            },
-            error: function() {
-                $("#response").html("Ошибка при получении списка клиентов");
-            }
-        });
-    }
-});
-
-        $(document).on('dblclick', '#client-list-ul li', function() {
-            var clientId = $(this).data('client-id');
-            setActiveClient(clientId);
-        });
-
-        function setActiveClient(clientId) {
-            $.ajax({
-                url: '/set_active_client/',
-                type: 'POST',
-                data: { client_id: clientId },
-                success: function(response) {
-                    alert("Активный клиент установлен");
-                },
-                error: function() {
-                    alert("Ошибка при установке активного клиента");
-                }
-            });
-        }
-
-        $('#sendMessage').click(function() {
-            var message = $('#message').val();
-            $.ajax({
-                url: '/send_message/',
-                type: 'POST',
-                data: { message: message },
-                success: function(response) {
-                    alert("Сообщение отправлено");
-                },
-                error: function() {
-                    alert("Ошибка при отправке сообщения");
-                }
-            });
-        });
-
-        getClients(); // Вызов функции при загрузке страницы
-</script>
-{% endblock %}
+    </div>
 </body>
 </html>

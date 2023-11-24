@@ -1,30 +1,24 @@
 {% extends "base.html" %}
-{% block content %}
+
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Test TCP Server Functions</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        .container { width: 300px; margin: auto; margin-top: 50px; }
-        input, button, textarea, .client-list { width: 100%; padding: 10px; margin-top: 10px; }
-        textarea { height: 200px; }
-        .client-list-item { display: flex; align-items: center; }
-        .client-list-item label { margin-left: 5px; } /* Добавить отступ слева от текста */
-    </style>
+    <link rel="stylesheet" href="{% static 'css/aside.css' %}">
 </head>
 <body>
+    {% block content %}
     <div class="container">
         <h2>Test TCP Server</h2>
+        <textarea id="memo" readonly></textarea>
         <button id="getClients">Получить список клиентов</button>
         <div class="client-list" id="clientList"></div> <!-- Контейнер для списка клиентов с чекбоксами -->
-        <input type="text" id="clientId" placeholder="ID клиента">
-        <button id="setActiveClient">Установить активного клиента</button>
         <input type="text" id="message" placeholder="Сообщение">
         <button id="sendMessage">Отправить сообщение</button>
-        <textarea id="memo" readonly></textarea>
+        
         <div id="response"></div>
     </div>
 {% endblock %}
