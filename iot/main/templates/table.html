@@ -1,20 +1,20 @@
 {% extends "base.html" %}
-
+{% load static %}
 {% block title %}Таблица{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="../static/main/css/table.css">
+<link rel="stylesheet" href="{% static 'css/aside.css' %}">
 <div class="table-container">
-    <table>
+    <table class ="content-table">
         <thead>
             <tr>
-                <th><a href="?sort_column=solar_panel&sort_direction={{ sort_direction }}">Id</a></th>
-                <th><a href="?sort_column=horizontal_position&sort_direction={{ sort_direction }}">Поворот по горизонтали</a></th>
-                <th><a href="?sort_column=vertical_position&sort_direction={{ sort_direction }}">Поворот по вертикали</a></th>
-                <th><a href="?sort_column=consumed_power&sort_direction={{ sort_direction }}"></a>Потребляемая мощность</th>
-                <th><a href="?sort_column=generated_power&sort_direction={{ sort_direction }}"></a>Вырабатываемая мощность</th>
-                <th><a href="?sort_column=date&sort_direction={{ sort_direction }}"></a>Дата</th>
-                <th><a href="?sort_column=time&sort_direction={{ sort_direction }}"></a>Время</th>
+                <th>Id</th>
+                <th>Поворот по горизонтали</a></th>
+                <th>Поворот по вертикали</a></th>
+                <th>Потребляемая мощность</th>
+                <th>Вырабатываемая мощность</th>
+                <th>Дата</th>
+                <th>Время</th>
             </tr>
         </thead>
         <tbody>

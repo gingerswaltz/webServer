@@ -1,30 +1,38 @@
-/* Стиль для таблицы */
-table {
-    width: 100%;
+.content-table{
     border-collapse: collapse;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Добавим тень для поднятия таблицы */
-    border-radius: 5px; /* Закруглим углы таблицы */
-    
+    margin: 25px 0;
+    font-size: 0.9em;
+    min-width: 400px;
+    border-radius: 5px 5px 0 0;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
-th, td {
-    padding: 10px;
-    border: 1px solid #ccc;
-    text-align: left;
+.content-table thead tr{
+    background-color: #009879;
+    color:#fff;
+    text-align: center;
+    font-weight: bold;
 }
 
-th {
-    background-color: #f2f2f2;
+.content-table th,
+.content-table td {
+    padding: 12px 15px;
 }
 
-tr:nth-child(even) {
-    background-color: #f2f2f2;
+.content-table tbody tr {
+    border-bottom: 1px solid #dddddd;
 }
 
-/* Стиль для контейнера таблицы */
-.table-container {
-    max-width: 100%; /* Убираем ограничение максимальной ширины */
-    margin: 20px; /* Добавим отступы для выравнивания таблицы */
+.content-table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
 
+.content-table tbody tr:last-of-type {
+    border-bottom: 2px solid #009879;
+}
+
+.content-table tbody tr:active-row {
+    font-weight: bold;
+    color: #009879;
 }
