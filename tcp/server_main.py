@@ -35,7 +35,10 @@ async def handle_set_active_client(request, server):
         data = await request.json()
         client_id = data.get('client_id')
         server.set_active_connection(int(client_id))
-        return web.Response(text=f"Активный клиент установлен: {client_id}")
+        if (server.current_connection_id==int(client_id)):
+            return web.Response(text=f"Активный клиент установлен: {client_id}")
+        else:
+            return web.Response(status=500)
     except Exception as e:
         logging.error(f"Error setting active client: {e}")
         return web.Response(status=500)
@@ -45,7 +48,8 @@ async def handle_send_message(request, server):
         data = await request.json()
         message = data.get('message')
         await server.send_message(message)
-        return web.Response(text="Сообщение отправлено")
+        result=server.send_message_debug()
+        return web.Response(text="ok")
     except Exception as e:
         logging.error(f"Error sending message: {e}")
         return web.Response(status=500)

@@ -1,15 +1,18 @@
-{% extends "base.html" %}
-
+{% comment %} {% extends "base.html" %} {% endcomment %} 
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Test TCP Server Functions</title>
+    <title>Управление солнечными установками</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="{% static 'css/aside.css' %}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'css/socket.css' %}">
+    <link rel="stylesheet" href="{% static 'css/aside.css'%}">
 </head>
 <body>
+
     {% block content %}
     <div class="container">
         <h2>Test TCP Server</h2>
@@ -18,7 +21,6 @@
         <div class="client-list" id="clientList"></div> <!-- Контейнер для списка клиентов с чекбоксами -->
         <input type="text" id="message" placeholder="Сообщение">
         <button id="sendMessage">Отправить сообщение</button>
-        
         <div id="response"></div>
     </div>
 {% endblock %}
@@ -78,8 +80,8 @@ $("#getClients").click(function() {
 
 
 
-        function setActiveClient(clientId) {
-    // Здесь может быть вызов AJAX для установки активного клиента на сервере
+    function setActiveClient(clientId) {
+    
     $.ajax({
         url: '/set_active_client/',
         type: 'POST',
@@ -93,9 +95,9 @@ $("#getClients").click(function() {
     });
 }
 
-        $("#sendMessage").click(function() {
-            var message = $("#message").val();
-            $.ajax({
+    $("#sendMessage").click(function() {
+        var message = $("#message").val();
+        $.ajax({
                 url: '/send_message/',
                 type: 'POST',
                 data: { "message": message },

@@ -1,55 +1,68 @@
-
-#container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+textarea#memo, input#message {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
-#output {
-    flex: 1;
-    border: 2px solid black;
-    margin: 8px;
+button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
 }
 
-#sidebar {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    height: 100%;
+button:hover {
+    background-color: #0056b3;
 }
 
-#client-list {
-    flex: 1;
-    border: 2px solid red;
-    width: 200px;
-    margin: 8px;
-    overflow-y: auto;
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-#send {
-    border: 2px solid red;
-    width: 200px;
-    margin: 8px;
+.client-list {
+    margin-bottom: 20px;
 }
 
-#input {
-    border: 2px solid purple;
-    margin: 8px;
-    padding: 8px;
-}
-
-@media (min-width: 768px) {
-    #container {
-        flex-direction: row;
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
     }
 
-    #input {
-        flex: none;
-        order: -1;
+    button, textarea#memo, input#message {
         width: 100%;
     }
+}
 
-    #output, #sidebar {
-        flex: 1;
-    }
+.client-list-item {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.client-list-item label {
+    margin: 0;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+#response {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.loading-spinner {
+    display: none; /* Показывать только при загрузке */
 }

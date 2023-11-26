@@ -30,7 +30,7 @@ def send_data_to_server(host, port, message):
                 response_message = {
                     "header": "response",
                     "command": command,
-                    "statement": str(bool(random.uniform(0, 1.1))),
+                    "statement": str(bool(round(random.uniform(0, 1)))),
                     "solar_panel_id": installation_number,
                     "date": datetime.now().strftime("%Y-%m-%d")
                 }
@@ -42,7 +42,6 @@ def send_data_to_server(host, port, message):
 if __name__ == "__main__":
     server_host = '127.0.0.1'
     server_port = 1024
-
     print("Enter id: ")
     installation_number = input()
 
