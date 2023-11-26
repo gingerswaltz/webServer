@@ -66,3 +66,12 @@ button:active {
 .loading-spinner {
     display: none; /* Показывать только при загрузке */
 }
+
+h2 {
+    color: #ccc; /* Цвет текста */
+    font-size: 24px; /* Размер шрифта */
+    font-weight: bold; /* Жирность текста */
+    text-align: center; /* Выравнивание текста по центру */
+    margin-top: 20px; /* Верхний отступ */
+    margin-bottom: 20px; /* Нижний отступ */
+}
