@@ -13,6 +13,7 @@ button {
     background-color: #007bff;
     color: white;
     cursor: pointer;
+    margin-bottom: 10px;
 }
 
 button:hover {
@@ -27,26 +28,31 @@ button:hover {
 
 .client-list {
     margin-bottom: 20px;
-}
-
-@media (max-width: 768px) {
-    .container {
-        padding: 15px;
-    }
-
-    button, textarea#memo, input#message {
-        width: 100%;
-    }
+    padding-left: 0; /* Устанавливаем padding-left равным 0, чтобы выровняться по левому краю */
 }
 
 .client-list-item {
-    border: 1px solid #ddd;
-    padding: 10px;
-    margin-bottom: 5px;
-    border-radius: 5px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start; /* Выравнивание элементов по левому краю */
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    padding: 10px; /* Отступ внутри .client-list-item */
+    width: fit-content; /* Ширина в соответствии с содержимым */
+    margin-left: 20px; /* Устанавливаем такой же отступ слева, как и у .container */
+}
+
+.client-button {
+    padding: 10px 15px; /* Адаптируйте отступы по вашему дизайну */
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    margin-bottom: 10px;
+    width: auto; /* Позволяет кнопке быть шириной содержимого плюс отступы */
+    margin: 0; /* Убираем внешние отступы, если они не нужны */
 }
 
 .client-list-item label {
@@ -64,14 +70,52 @@ button:active {
 }
 
 .loading-spinner {
-    display: none; /* Показывать только при загрузке */
+    display: none;
 }
 
 h2 {
-    color: #ccc; /* Цвет текста */
-    font-size: 24px; /* Размер шрифта */
-    font-weight: bold; /* Жирность текста */
-    text-align: center; /* Выравнивание текста по центру */
-    margin-top: 20px; /* Верхний отступ */
-    margin-bottom: 20px; /* Нижний отступ */
+    color: #ccc;
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.control-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.control-button {
+    margin-right: 10px;
+}
+
+#valueInputContainer {
+    width: 100%;
+}
+
+#sendValue {
+    margin-top: 10px;
+}
+
+#cancelValue {
+    margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    button, textarea#memo, input#message {
+        width: 100%;
+        margin-bottom: 10px;
+        margin-top: 10px;
+    }
+
+    .client-button {
+        width: 100%; /* Кнопки будут на всю ширину в мобильном виде */
+    }
 }
