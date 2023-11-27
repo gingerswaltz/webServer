@@ -48,8 +48,7 @@ async def handle_send_message(request, server):
         data = await request.json()
         message = data.get('message')
         await server.send_message(message)
-        result=server.send_message_debug()
-        return web.Response(text="ok")
+        return web.Response(text="Сообщение отправлено")
     except Exception as e:
         logging.error(f"Error sending message: {e}")
         return web.Response(status=500)
