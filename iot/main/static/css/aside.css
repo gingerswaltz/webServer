@@ -145,7 +145,7 @@ header .image-text .header-text{
   transform: translateY(-50%);
   height: 25px;
   width: 25px;
-  background: var(--primary-color);
+  background:  #695CFE;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -224,9 +224,13 @@ header .image-text .header-text{
   background: var(--toggle-color);
 }
 
+
+
+
 .sidebar ul {
   padding-left: 0;
 }
+
 .switch::before{
   content: '';
   position: absolute;
@@ -241,6 +245,12 @@ header .image-text .header-text{
 }
 body.dark .switch::before{
   left:25px;
+}
+
+
+/* селектор будет скрывать .toggle-switch только тогда, когда у aside есть класс close. */
+.sidebar.close .toggle-switch {
+  display: none;
 }
 
 /* ===== main ===== */
