@@ -8,26 +8,41 @@ from django.core import serializers
 import requests
 import json
 SERVER_URL = 'http://127.0.0.1:8080'  # адрес сервера
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 
 
-def dashboard(request):
-    solar_panels = Solar_Panel.objects.all()
+class DashboardView(View):
+    def get(self, request, *args, **kwargs):
+        solar_panels = Solar_Panel.objects.all()
 
-    # Check if it's an AJAX request
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        selected_panel_number = request.GET.get('selected_panel')
-        if selected_panel_number == "all":
-            characteristics = Characteristics.objects.all().order_by('-date', 'time')
+        # Устанавливаем значение по умолчанию для ночного режима
+        night_mode = request.COOKIES.get('night_mode', 'off')
+
+        # Проверяем параметр 'night_mode' в GET запросе
+        if 'night_mode' in request.GET:
+            night_mode = request.GET['night_mode']
+
+        # Обработка AJAX запросов
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            selected_panel_number = request.GET.get('selected_panel')
+            if selected_panel_number == "all":
+                characteristics = Characteristics.objects.all().order_by('-date', 'time')
+            else:
+                selected_panel = Solar_Panel.objects.get(installation_number=selected_panel_number)
+                characteristics = Characteristics.objects.filter(solar_panel=selected_panel).order_by('-date', 'time')
+
+            # Сериализуем queryset в JSON
+            data = serializers.serialize('json', characteristics)
+            response = JsonResponse({'data': data})
         else:
-            selected_panel = Solar_Panel.objects.get(installation_number=selected_panel_number)
-            characteristics = Characteristics.objects.filter(solar_panel=selected_panel).order_by('-date', 'time')
+            # Создаем ответ для не-AJAX запросов
+            response = render(request, 'dashboard.html', {'solar_panels': solar_panels, 'night_mode': night_mode})
 
-        # Serializing queryset to JSON
-        data = serializers.serialize('json', characteristics)
-        return JsonResponse({'data': data})
+        # Устанавливаем cookie в ответе
+        response.set_cookie('night_mode', night_mode)
+        return response
+    
 
-    return render(request, 'dashboard.html', {'solar_panels': solar_panels})
 
 
 def get_characteristics_data(request, installation_number):
@@ -40,14 +55,27 @@ def get_characteristics_data(request, installation_number):
     return JsonResponse(data)
 
 
-def char_table(request):
-    char = Characteristics.objects.order_by('-date', '-time') 
-    return render(request, "table.html", {'characteristics': char})
+class CharTableView(View):
+    def get(self, request, *args, **kwargs):
+        night_mode = request.COOKIES.get('night_mode', 'off')
+
+        # Проверяем параметр 'night_mode' в GET запросе
+        if 'night_mode' in request.GET:
+            night_mode = request.GET['night_mode']
+
+        char = Characteristics.objects.order_by('-date', '-time') 
+        
+        response = render(request, "table.html", {'characteristics': char, 'night_mode': night_mode})
+        response.set_cookie('night_mode', night_mode)
+
+        return response
 
 
 def solar_panels(request):
+    night_mode = request.COOKIES.get('night_mode', 'off')
+
     solar = Solar_Panel.objects.all()
-    return render(request, "panels.html", {'panels': solar})
+    return render(request, "panels.html", {'panels': solar, 'night_mode': night_mode})
 
 
 def characteristics_data(request):
@@ -69,8 +97,10 @@ def characteristics_data(request):
 
 
 def socket(request):
+    night_mode = request.COOKIES.get('night_mode', 'off')
+
     sol = Solar_Panel.objects.all()
-    return render(request, "socket.html")
+    return render(request, "socket.html", {'night_mode': night_mode})
 
 
 # функции сервера
