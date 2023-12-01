@@ -14,16 +14,13 @@ from django.views.generic import TemplateView, View
 class DashboardView(View):
     def get(self, request, *args, **kwargs):
         solar_panels = Solar_Panel.objects.all()
-
-        # Устанавливаем значение по умолчанию для ночного режима
         night_mode = request.COOKIES.get('night_mode', 'off')
 
-        # Проверяем параметр 'night_mode' в GET запросе
         if 'night_mode' in request.GET:
             night_mode = request.GET['night_mode']
 
-        # Обработка AJAX запросов
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # Обработка AJAX запросов
             selected_panel_number = request.GET.get('selected_panel')
             if selected_panel_number == "all":
                 characteristics = Characteristics.objects.all().order_by('-date', 'time')
@@ -31,28 +28,48 @@ class DashboardView(View):
                 selected_panel = Solar_Panel.objects.get(installation_number=selected_panel_number)
                 characteristics = Characteristics.objects.filter(solar_panel=selected_panel).order_by('-date', 'time')
 
-            # Сериализуем queryset в JSON
+            # Сериализация данных для AJAX запросов
             data = serializers.serialize('json', characteristics)
-            response = JsonResponse({'data': data})
+            return JsonResponse({'data': data})
         else:
-            # Создаем ответ для не-AJAX запросов
-            response = render(request, 'dashboard.html', {'solar_panels': solar_panels, 'night_mode': night_mode})
+            # Получение данных для графика
+            characteristics = Characteristics.objects.all()
+            generated_power = [c.generated_power for c in characteristics]
+            consumed_power = [c.consumed_power for c in characteristics]
 
-        # Устанавливаем cookie в ответе
-        response.set_cookie('night_mode', night_mode)
-        return response
+            # Сериализация данных в JSON для графика
+            generated_power_json = json.dumps(generated_power)
+            consumed_power_json = json.dumps(consumed_power)
+
+            # Формирование контекста для шаблона
+            context = {
+                'solar_panels': solar_panels,
+                'night_mode': night_mode,
+                'generated_power': generated_power_json,
+                'consumed_power': consumed_power_json,
+            }
+
+            # Создание HTTP ответа
+            response = render(request, 'dashboard.html', context)
+            response.set_cookie('night_mode', night_mode)
+            return response
     
 
+def get_characteristics_data_by_panel(request, panel_id):
+    # Получение данных по конкретной солнечной установке
+    characteristics = Characteristics.objects.filter(solar_panel_id=panel_id)
 
+    # Подготовка данных для графика
+    generated_power = [c.generated_power for c in characteristics]
+    consumed_power = [c.consumed_power for c in characteristics]
 
-def get_characteristics_data(request, installation_number):
-    characteristics = Characteristics.objects.filter(solar_panel__installation_number=installation_number).order_by('-date', 'time')
+    # Сериализация данных в JSON
     data = {
-        'labels': [f"{char.date} {char.time}" for char in characteristics],
-        'generated_power_data': [char.generated_power for char in characteristics],
-        # ... add other data as needed
+        'generated_power': generated_power,
+        'consumed_power': consumed_power
     }
     return JsonResponse(data)
+
 
 
 class CharTableView(View):
@@ -94,6 +111,8 @@ def characteristics_data(request):
     }
 
     return JsonResponse(data)
+
+
 
 
 def socket(request):
