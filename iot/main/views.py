@@ -85,8 +85,8 @@ class CharTableView(View):
             night_mode = request.GET['night_mode']
 
         char = Characteristics.objects.order_by('-date', '-time') 
-        
-        response = render(request, "table.html", {'characteristics': char, 'night_mode': night_mode})
+        solar_panels = Solar_Panel.objects.all().order_by('id')
+        response = render(request, "table.html", {'characteristics': char, 'night_mode': night_mode, "solar_panels":solar_panels})
         response.set_cookie('night_mode', night_mode)
 
         return response

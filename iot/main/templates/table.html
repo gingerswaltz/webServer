@@ -8,11 +8,7 @@
     <table class ="content-table">
         <thead>
             <tr>
-                <th>Id
-                    <select class="table-filter">
-                        <option value="{{ solar_panel }}"></option>
-                    </select>
-                </th>
+                <th>Номер установки</th>
                 <th>Поворот по горизонтали<i class='bx bx-chevron-down table-icon'></i></th>
                 <th>Поворот по вертикали<i class='bx bx-chevron-down table-icon'></i></th>
                 <th>Потребляемая мощность<i class='bx bx-chevron-down table-icon'></i></th>
@@ -24,13 +20,13 @@
         <tbody>
             {% for char in characteristics %}
                 <tr>
-                    <td>{{char.solar_panel}}</td>
-                    <td>{{char.horizontal_position}}</td>
-                    <td>{{char.vertical_position}}</td>
-                    <td>{{char.consumed_power}}</td>
-                    <td>{{char.generated_power}}</td>
-                    <td>{{char.date}}</td>
-                    <td>{{char.time}}</td>
+                    <td>{{ char.solar_panel }}</td>
+                    <td>{{ char.horizontal_position }}</td>
+                    <td>{{ char.vertical_position }}</td>
+                    <td>{{ char.consumed_power }}</td>
+                    <td>{{ char.generated_power }}</td>
+                    <td>{{ char.date }}</td>
+                    <td>{{ char.time }}</td>
                 </tr>
             {% empty %}
                 <tr>
@@ -39,6 +35,32 @@
             {% endfor %}
         </tbody>
     </table>
+    <select class="table-filter" id="solarPanelFilter">
+        <option value="">Все установки</option>
+        {% for panel in solar_panels %}
+            <option value="{{ panel.id }}">{{ panel.id }}</option>
+        {% endfor %}
+    </select>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterSelect = document.getElementById('solarPanelFilter');
+        const tableRows = document.querySelectorAll('.content-table tbody tr');
+
+        filterSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+
+            tableRows.forEach(row => {
+                const cellValue = row.cells[0].textContent.trim();
+                if (selectedValue === "" || cellValue === selectedValue) {
+                    row.style.display = ''; // показываем строку
+                } else {
+                    row.style.display = 'none'; // скрываем строку
+                }
+            });
+        });
+    });
+</script>
 
 {% endblock %}
