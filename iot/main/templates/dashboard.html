@@ -12,16 +12,19 @@
     <button id="showOverallStats">Показать общую статистику</button>
     <!-- Подключение Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <div>
+    <p>Выберите установку, чтобы получить информацию по ней:</p>
     <select id="panelSelect">
         {% for panel in solar_panels %}
             <option value="{{ panel.id }}">{{ panel.id }}</option>
         {% endfor %}
     </select>
+    </div>
 
     <!-- JavaScript для создания графика -->
     <script>
-        var generated_power = {{ generated_power|safe }};
-        var consumed_power = {{ consumed_power|safe }};
+        var generated_power = []; // изначально ничего не отображаем
+        var consumed_power = [];
         var ctx = document.getElementById('powerChart').getContext('2d');
         var myChart = new Chart(ctx, {
     type: 'line',
@@ -100,7 +103,18 @@
                 myChart.update();
             });
         });
+        
+        
+document.getElementById('showOverallStats').addEventListener('click', function() {
+    fetch('/get-general-characteristics-data/')
+    .then(response => response.json())
+    .then(data => {
+        myChart.data.datasets[0].data = data.generated_power;
+        myChart.data.datasets[1].data = data.consumed_power;
 
+        myChart.update();
+    });
+});
 
     
     </script>

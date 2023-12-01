@@ -13,7 +13,7 @@ from django.views.generic import TemplateView, View
 
 class DashboardView(View):
     def get(self, request, *args, **kwargs):
-        solar_panels = Solar_Panel.objects.all()
+        solar_panels = Solar_Panel.objects.all().order_by('id')
         night_mode = request.COOKIES.get('night_mode', 'off')
 
         if 'night_mode' in request.GET:
@@ -32,21 +32,12 @@ class DashboardView(View):
             data = serializers.serialize('json', characteristics)
             return JsonResponse({'data': data})
         else:
-            # Получение данных для графика
-            characteristics = Characteristics.objects.all()
-            generated_power = [c.generated_power for c in characteristics]
-            consumed_power = [c.consumed_power for c in characteristics]
-
-            # Сериализация данных в JSON для графика
-            generated_power_json = json.dumps(generated_power)
-            consumed_power_json = json.dumps(consumed_power)
-
+    
             # Формирование контекста для шаблона
             context = {
                 'solar_panels': solar_panels,
                 'night_mode': night_mode,
-                'generated_power': generated_power_json,
-                'consumed_power': consumed_power_json,
+                
             }
 
             # Создание HTTP ответа
@@ -70,6 +61,19 @@ def get_characteristics_data_by_panel(request, panel_id):
     }
     return JsonResponse(data)
 
+
+def get_general_characteristics_data(request):
+    # Получение всех записей из модели
+    characteristics = Characteristics.objects.all().order_by('-date', 'time')
+    generated_power = [c.generated_power for c in characteristics]
+    consumed_power = [c.consumed_power for c in characteristics]
+
+    # Сериализация данных в JSON для графика
+    data = {
+        'generated_power': generated_power,
+        'consumed_power': consumed_power
+    }
+    return JsonResponse(data)
 
 
 class CharTableView(View):
