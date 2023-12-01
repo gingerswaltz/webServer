@@ -32,7 +32,7 @@ def send_data_to_server(host, port, message):
                     "command": command,
                     "statement": str(bool(round(random.uniform(0, 1)))),
                     "solar_panel_id": installation_number,
-                    "date": datetime.now().strftime("%Y-%m-%d")
+                    "date": datetime.now().strftime("%Y-%m-%d")+datetime.now().strftime("%H:%M")
                 }
                 s.sendall(json.dumps(response_message).encode() + b'\n')
                 print(f'Sent: {response_message}')
@@ -40,7 +40,7 @@ def send_data_to_server(host, port, message):
             print("Error decoding JSON data from server:", e)
 
 if __name__ == "__main__":
-    server_host = '127.0.0.1'
+    server_host = '85.193.80.133'
     server_port = 1024
     print("Enter id: ")
     installation_number = input()

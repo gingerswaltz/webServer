@@ -188,8 +188,7 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
                             logging.info(f"SQL query executed:{sql_query}")
 
                         table = "main_characteristics"
-                        unique_key = "id"
-                        sql_query = await self.update_query(table, json_data, unique_key)
+                        sql_query = await self.insert_query(table, json_data)
                         if sql_query:
                             await self.insert_data(sql_query)
                     else:
@@ -328,7 +327,7 @@ class TCPConnection(AbstractTCP.AbstractTCPConnection):
     async def insert_query(self, table: str, data: dict) -> str:
         
         # Исключаем ключ 'header' из словаря
-        filtered_data = {k: v for k, v in data.items() if k != "header"}
+        filtered_data = {k: v for k, v in data.items() if k != "header" and k!="id"}
 
         columns = ', '.join(filtered_data.keys())
         values = ', '.join([f"'{v}'" for v in filtered_data.values()])
