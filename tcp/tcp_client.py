@@ -40,7 +40,8 @@ def send_data_to_server(host, port, message):
             print("Error decoding JSON data from server:", e)
 
 if __name__ == "__main__":
-    server_host = '85.193.80.133'
+    # server_host = '85.193.80.133'
+    server_host = 'localhost'
     server_port = 1024
     print("Enter id: ")
     installation_number = input()

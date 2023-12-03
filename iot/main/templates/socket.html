@@ -2,18 +2,26 @@
 {% load static %}
 
 {% block content %}
-    <div class="container">
-        <h2>Управление солнечными установками</h2>
-        <textarea id="memo" readonly placeholder="Здесь будет информация.."></textarea>
-        <button id="getClients">Получить список клиентов</button>
-        <div class="client-list" id="clientList"></div> <!-- Контейнер для списка клиентов с чекбоксами -->
-    <div id="valueInputContainer" style="display: none;">
-        <input type="number" id="valueInput" placeholder="Введите значение">
-        <button id="sendValue">Отправить</button>
-        <button id="cancelValue">Назад</button>
-    </div>
-        <div id="response"></div>
+<div class="container">
+    <h2>Управление солнечными установками</h2>
+    
+    <!-- Основной контейнер для memo и списка клиентов -->
+    <div class="content-container">
+        <!-- Контейнер для memo и кнопки Очистить -->
+        <div class="memo-container">
+            <textarea id="memo" readonly placeholder="Здесь будет информация.."></textarea>
+            <button id="clearMemo">Очистить</button>
+        </div>
         
+        <!-- Контейнер для списка клиентов и управляющих элементов -->
+        <div class="client-list-container">
+            <button id="getClients" style="">Получить список клиентов</button>
+            <div class="client-list" id="clientList"></div> <!-- Контейнер для списка клиентов -->
+            <div id="response"></div>
+        </div>
+    </div>
+    
+    <!-- Контейнер для управляющих кнопок -->
     <div class="control-buttons">
         <button class="control-button" id="btnUp">Up</button>
         <button class="control-button" id="btnDown">Down</button>
@@ -21,11 +29,38 @@
         <button class="control-button" id="btnRight">Right</button>
         <button class="control-button" id="btnReset">Reset</button>
     </div>
+
+    <div id="valueInputContainer" style="display: none;">
+                <input type="number" id="valueInput" placeholder="Введите значение">
+                <button id="sendValue">Отправить</button>
+                <button id="cancelValue">Назад</button>
     </div>
+</div>
 
     
 
 <script>
+    
+
+    $(document).ready(function() {
+    // Инициализация кнопок как неактивных
+    $('.control-button').prop('disabled', true);
+});
+
+
+     $(document).ready(function() {
+        loadMemoContent();
+    });
+    
+    $('#clearMemo').click(function() {
+    clearMemoContent();
+});
+
+function clearMemoContent() {
+    $("#memo").val(''); // Очищаем текстовое поле
+    localStorage.removeItem("memoContent"); // Удаляем данные из локального хранилища
+}
+    
     var currentCommand = '';
     $('.control-button').click(function() {
     var command = $(this).text().toLowerCase();
@@ -49,12 +84,39 @@ $('#sendValue').click(function() {
     $('#valueInput').val(''); // Очистка поля при отмене
 });
 
-        
+
 function appendToMemo(text) {
     var $memo = $("#memo");
-    $memo.val($memo.val() + text + "\n"); // Добавляем текст с новой строки
+    var timestamp = new Date().toLocaleString(); // Получаем текущую дату и время
+    var updatedText = $memo.val() + timestamp + " - " + text + "\n"; // Добавляем новое сообщение с временной меткой в конец
+    $memo.val(updatedText); // Обновляем содержимое memo
+    trimMemoContent();
+    localStorage.setItem("memoContent", updatedText); // Сохраняем обновленный текст в локальное хранилище
     $memo.scrollTop($memo[0].scrollHeight); // Прокручиваем вниз до последнего сообщения
 }
+
+
+
+function trimMemoContent() {
+        var maxLines = 300;
+        var $memo = $("#memo");
+        var lines = $memo.val().split("\n");
+
+        if (lines.length > maxLines) {
+            lines = lines.slice(lines.length - maxLines);
+            var trimmedContent = lines.join("\n");
+            $memo.val(trimmedContent);
+            localStorage.setItem("memoContent", trimmedContent);
+        }
+    }
+
+
+function loadMemoContent() {
+        var savedContent = localStorage.getItem("memoContent");
+        if (savedContent) {
+            $("#memo").val(savedContent);
+        }
+    }
 
 function populateClientsList(clientsObj) {
     var $clientList = $('#clientList');
@@ -106,6 +168,8 @@ function setActiveClient(clientId) {
         data: { "client_id": clientId },
         success: function(response) {
             appendToMemo("Активный клиент установлен: " + clientId);
+        // После успешной установки клиента активируйте кнопки
+        $('.control-button').prop('disabled', false);
         },
         error: function() {
             appendToMemo("Ошибка при установке активного клиента");

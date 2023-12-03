@@ -119,3 +119,61 @@ h2 {
         width: 100%; /* Кнопки будут на всю ширину в мобильном виде */
     }
 }
+
+.content-container {
+    display: flex;
+    margin-bottom: 20px; /* Добавляет отступ между основными контейнерами */
+}
+
+.memo-container {
+    flex: 1; /* Занимает доступное пространство и устанавливает ширину на 50%, если нет других свойств */
+    margin-right: 20px; /* Отступ справа от memo */
+}
+
+#memo {
+    width: 100%; /* Полная ширина в пределах memo-container */
+    height: 300px; /* Вы можете установить высоту по своему усмотрению */
+    margin-bottom: 10px; /* Отступ снизу от textarea */
+    border: 2px solid #000;
+}
+
+
+.client-list {
+    flex-grow: 1; /* Позволяет client-list занимать все доступное пространство */
+    overflow-y: auto; /* Добавляет прокрутку при необходимости */
+    margin-bottom: 10px; /* Отступ снизу от списка клиентов */
+    height: calc(300px - 40px - 20px * 2); /* Высота за вычетом кнопки и padding сверху и снизу */
+    overflow-y: auto;
+}
+
+.control-buttons {
+    display: flex;
+    justify-content: center; /* Центрирует кнопки внутри контейнера */
+    gap: 10px; /* Расстояние между кнопками */
+}
+
+.control-button {
+    flex: 1; /* Кнопки будут занимать равное пространство и равномерно распределены */
+    min-width: 50px; /* Минимальная ширина для каждой кнопки */
+}
+
+.control-button:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+}
+
+
+.client-list-container {
+    border: 2px solid #fff; /* черная рамка */
+    height: 300px; /* высота равная высоте memo */
+    overflow-y: auto; /* прокрутка по вертикали если содержимое не влезает */
+    padding: 10px; /* небольшой внутренний отступ */
+}
+
+.client-button {
+    display: block; /* блочное отображение, чтобы кнопки были друг под другом */
+    margin-bottom: 5px; /* отступ между кнопками */
+    width: calc(100% - 20px); /* ширина за вычетом отступов */
+    /* дополнительные стили кнопок */
+}
