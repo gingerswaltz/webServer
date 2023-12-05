@@ -5,6 +5,9 @@ class Solar_Panel(models.Model):
     id = models.IntegerField(primary_key=True)
     ip_address = models.CharField(max_length=15, default='')
     port = models.CharField(max_length=5, default='')
+    # coordinates 
+    # description
+    # тип установки (поворот не поворот)
 
     class Meta:
         ordering = ['-id']
@@ -21,6 +24,10 @@ class Characteristics(models.Model):
     consumed_power = models.FloatField()
     vertical_position = models.IntegerField()
     horizontal_position = models.IntegerField()
+    # status (on off etc)
+    # options (прописаны в заметках)
+    # погода (солнце, ветренность, температура, влажность)
+    # заряд акб
     solar_panel = models.ForeignKey(Solar_Panel, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
