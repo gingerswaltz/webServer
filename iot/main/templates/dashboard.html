@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Главная страница{% endblock %}
+
+{% block content %}
+    <h1>Анализ Энергопотребления</h1>
+    
+    <!-- Элемент canvas для графика -->
+    <canvas id="powerChart" width="800" height="400"></canvas>
+     <!-- Кнопка для отображения общей статистики -->
+    <button id="showOverallStats">Показать общую статистику</button>
+    <!-- Подключение Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <div>
+    <p>Выберите установку, чтобы получить информацию по ней:</p>
+    <select id="panelSelect">
+        {% for panel in solar_panels %}
+            <option value="{{ panel.id }}">{{ panel.id }}</option>
+        {% endfor %}
+    </select>
+    </div>
+
+    <!-- JavaScript для создания графика -->
+    <script>
+        var generated_power = []; // изначально ничего не отображаем
+        var consumed_power = [];
+        var ctx = document.getElementById('powerChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['', '', ''], // Замените на актуальные метки
+        datasets: [{
+            label: 'Generated Power',
+            data: generated_power,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)', // Заливка под линией
+            borderWidth: 2,
+            pointRadius: 3, // Размер точек
+            pointHoverRadius: 5, // Размер точек при наведении
+        }, {
+            label: 'Consumed Power',
+            data: consumed_power,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)', // Заливка под линией
+            borderWidth: 2,
+            pointRadius: 3, // Размер точек
+            pointHoverRadius: 5, // Размер точек при наведении
+        }]
+    },
+    options: {
+        responsive: true, // Адаптивность графика
+        title: {
+            display: true,
+            text: 'Energy Consumption and Generation'
+        },
+        tooltips: {
+            mode: 'index',
+            intersect: false,
+        },
+        hover: {
+            mode: 'nearest',
+            intersect: true
+        },
+        scales: {
+            xAxes: [{
+                display: true,
+                scaleLabel: {
+                    display: true,
+                    labelString: 'Time'
+                }
+            }],
+            yAxes: [{
+                display: true,
+                scaleLabel: {
+                    display: true,
+                    labelString: 'Power (kW)'
+                },
+                ticks: {
+                    beginAtZero: true,
+                }
+            }]
+        },
+        animation: {
+            duration: 1000, // Длительность анимации
+        },
+        legend: {
+            position: 'top', // Позиция легенды
+        },
+    }
+});
+       
+        document.getElementById('panelSelect').addEventListener('change', function() {
+            var selectedPanel = this.value;
+            fetch('/get-characteristics-data/' + selectedPanel)
+            .then(response => response.json())
+            .then(data => {
+                // Обновляем данные графика
+                myChart.data.datasets[0].data = data.generated_power;
+                myChart.data.datasets[1].data = data.consumed_power;
+
+                // Перерисовываем график
+                myChart.update();
+            });
+        });
+        
+        
+document.getElementById('showOverallStats').addEventListener('click', function() {
+    fetch('/get-general-characteristics-data/')
+    .then(response => response.json())
+    .then(data => {
+        myChart.data.datasets[0].data = data.generated_power;
+        myChart.data.datasets[1].data = data.consumed_power;
+
+        myChart.update();
+    });
+});
+
+    
+    </script>
+{% endblock %}
