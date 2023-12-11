@@ -1,7 +1,35 @@
-{% extends "base.html" %}
-
+{% extends "base.html" %} 
 {% block title %}Управление панелями{% endblock %}
 
-{% block content %}
-
-{% endblock %}
+{%block content %}
+<div class="table-container">
+  <table class="content-table">
+    <thead>
+      <tr>
+        <th>Номер установки</th>
+        <th>IP адрес<i class="bx bx-chevron-down table-icon"></i></th>
+        <th>Порт<i class="bx bx-chevron-down table-icon"></i></th>
+        <th>Состояние<i class="bx bx-chevron-down table-icon"></i></th>
+        <th>Управление</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for panel in panels %}
+      <tr>
+        <td>{{ panel.id }}</td>
+        <td>{{ panel.ip_address }}</td>
+        <td>{{ panel.port }}</td>
+        <td>{{panel.status}}</td>
+        <td>
+           <button onclick="location.href='panel_detail?id={{ panel.id }}'">Управлять</button>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4">Нет данных</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endblock %}
+</div>
