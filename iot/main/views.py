@@ -1,5 +1,5 @@
 from django.views.generic import TemplateView, View
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, JsonResponse
 from django import forms
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView
@@ -158,6 +158,15 @@ def send_message_to_client(request):
 
 def panel_detail(request):
     night_mode = request.COOKIES.get('night_mode', 'off')
-    # Логика для обработки запроса для конкретной панели с id = panel_id
-    # todo
-    return render(request, "panel_detail.html", {'night_mode': night_mode})
+    # Извлечение ID панели из GET-запроса
+    panel_id = request.GET.get('id')
+
+    # Получение объекта панели из базы данных или возврат 404, если такой панель не найдена
+    panel = get_object_or_404(Solar_Panel, id=panel_id)
+    
+    context = {
+        'panel': panel,
+        'night_mode': night_mode,
+    }
+
+    return render(request, "panel_detail.html", context)

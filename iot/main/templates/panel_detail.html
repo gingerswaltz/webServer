@@ -1,4 +1,38 @@
-{% extends "base.html" %}
-
+{% extends "base.html" %} 
 {% block content %}
+<div class="panel-line">
+  <div class="panel-info">
+    <div class="panel-block">
+      <h3>ID панели</h3>
+      <p>{{ panel.id }}</p>
+    </div>
+    <div class="panel-block">
+      <h3>IP-адрес</h3>
+      <p>{{ panel.ip_address }}</p>
+    </div>
+    <div class="panel-block">
+      <h3>Порт</h3>
+      <p>{{ panel.port }}</p>
+    </div>
+    <!-- Добавьте другие блоки по аналогии -->
+  </div>
+</div>
+
+<div class="panel-line">
+  <div class="panel-info">
+    <div class="panel-block">
+      <h3>Кавасаки</h3>
+      <p>врумм</p>
+    </div>
+    <div class="panel-block">
+      <h3>Каго</h3>
+      <p>...</p>
+    </div>
+    <div class="panel-block">
+      <h3>Крико</h3>
+      <p></p>
+    </div>
+    <!-- Добавьте другие блоки по аналогии -->
+  </div>
+</div>
 {% endblock %}
