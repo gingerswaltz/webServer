@@ -150,11 +150,6 @@ h2 {
   overflow-y: auto;
 }
 
-.control-buttons {
-  display: flex;
-  justify-content: center; /* Центрирует кнопки внутри контейнера */
-  gap: 10px; /* Расстояние между кнопками */
-}
 
 .control-button {
   flex: 1; /* Кнопки будут занимать равное пространство и равномерно распределены */

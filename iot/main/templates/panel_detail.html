@@ -18,11 +18,21 @@
   </div>
 </div>
 
-<div class="panel-line">
+<div class="panel-line" style="padding-top: 350px">
   <div class="panel-info">
     <div class="panel-block">
       <h3>Кавасаки</h3>
-      <p>врумм</p>
+      <p>
+        <!-- Контейнер для управляющих кнопок -->
+      </p>
+
+      <div class="control-buttons">
+        <button class="control-button" id="btnUp">Up</button>
+        <button class="control-button" id="btnDown">Down</button>
+        <button class="control-button" id="btnLeft">Left</button>
+        <button class="control-button" id="btnRight">Right</button>
+        <button class="control-button" id="btnReset">Reset</button>
+      </div>
     </div>
     <div class="panel-block">
       <h3>Каго</h3>
@@ -32,7 +42,97 @@
       <h3>Крико</h3>
       <p></p>
     </div>
-    <!-- Добавьте другие блоки по аналогии -->
+    <!-- todo: сделать модальное окно для ввода градусов-->
   </div>
+{% comment %} 
+  <div id="modalWrapper" class="show" style="display: flex">
+    <div id="editModal">
+      <form id="addForm">
+        <label for="addname">name:</label
+        ><input type="text" id="addname" name="name" /><br /><label
+          for="addaddress"
+          >address:</label
+        ><input type="text" id="addaddress" name="address" /><br /><label
+          for="addphone"
+          >phone:</label
+        ><input type="text" id="addphone" name="phone" /><br /><button
+          class="button-glass"
+          type="submit"
+        >
+          Добавить запись</button
+        ><button class="close-button" type="button"></button>
+      </form>
+    </div>
+  </div> {% endcomment %}
+{% comment %} 
+  <div class="valueInputContainer" class='hide' style='display: flex; opacity:'>
+  <div id="editModal">
+      <form id="addForm">
+        <label for="add">Значение(градусы):</label>
+        <input type="text" id="add" name="name" /><br /><
+        <button
+          type="submit"
+        >
+          Отправить
+          </button>
+          <button class="close-button" type="button"></button>
+      </form>
+    </div>
+  </div> {% endcomment %}
+
+
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация кнопок как неактивных
+    console.log({{ panel.id }});
+    setActiveClient({{ panel.id }});
+  });
+
+
+  function setActiveClient(clientId) {
+    $.ajax({
+      url: "/set_active_client/",
+      type: "POST",
+      data: { client_id: clientId },
+      success: function (response) {
+        alert("Активный клиент установлен: " + clientId);
+      },
+      error: function () {
+        alert("Ошибка при установке активного клиента");
+      },
+    });
+  }
+
+  $(".control-button").click(function () {
+    var command = $(this).text().toLowerCase();
+    currentCommand = command;
+    if (
+      command === "up" ||
+      command === "down" ||
+      command === "left" ||
+      command === "right"
+    ) {
+      $("#valueInputContainer").show();
+    } else if (command === "reset") {
+      sendMessageToClient(command);
+    }
+  });
+
+  function sendMessageToClient(message) {
+    $.ajax({
+      url: "/send_message/",
+      type: "POST",
+      data: { message: message },
+      success: function (response) {
+        alert("Сообщение отправлено: " + message); // todo: вывод например в заголовок блока
+      },
+      error: function () {
+        alert("Ошибка при отправке сообщения");
+      },
+    });
+  }
+</script>
+
 {% endblock %}
