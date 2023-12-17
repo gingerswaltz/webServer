@@ -23,6 +23,12 @@
 <button id="week">Неделя</button>
 <button id="month">Месяц</button>
 
+<label for="dateRangeInput">Выберите промежуток:</label>
+<input type="text" id="dateRangeInput" name="dateRangeInput">
+
+<script src="https://cdn.jsdelivr.net/npm/jquery"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker"></script>
 
 <!-- JavaScript для создания графика -->
 <script>
@@ -133,7 +139,6 @@
           allDate = data.date;
 
           myChart.update(); 
-          console.log(allDate);
         });
     });
 
@@ -160,26 +165,82 @@
       myChart.update();
     });
 
-    document
-    .getElementById("month")
-    .addEventListener("click", function () {
-      var dateList = allDate;
-      var todayDate = new Date();
-      var filteredList = dateList.filter(function(dateString) {
-        // Преобразуем строку даты в объект Date
-        var date = new Date(dateString);
+  document
+  .getElementById("month")
+  .addEventListener("click", function () {
+    var dateList = allDate;
+    var todayDate = new Date();
+    var filteredList = dateList.filter(function(dateString) {
+      // Преобразуем строку даты в объект Date
+      var date = new Date(dateString);
 
-        // Вычисляем разницу в днях между сегодняшней датой и датой в списке
-        var monthsDifference = (todayDate.getMonth() + 12 * todayDate.getFullYear()) - (date.getMonth() + 12 * date.getFullYear());
+      // Вычисляем разницу в днях между сегодняшней датой и датой в списке
+      var monthsDifference = (todayDate.getMonth() + 12 * todayDate.getFullYear()) - (date.getMonth() + 12 * date.getFullYear());
 
-        // Оставляем только те элементы, которые находятся в пределах последней недели
-        return monthsDifference <= 1;
-      });
-
-      myChart.data.labels = filteredList;
-      console.log(filteredList);
-      myChart.update();
+      // Оставляем только те элементы, которые находятся в пределах последней недели
+      return monthsDifference <= 1;
     });
+
+    myChart.data.labels = filteredList;
+
+    myChart.update();
+  });
+
+  //Инициализация input-календаря с выбором диапазона дат для графика
+  document.addEventListener("DOMContentLoaded", function() {
+            // Инициализируем daterangepicker для выбора промежутка дат
+            $('#dateRangeInput').daterangepicker({locale: {
+            format: 'DD.MM.YYYY',
+            "applyLabel": "Ок",
+            "cancelLabel": "Отмена",
+            "fromLabel": "От",
+            "toLabel": "До",
+            "customRangeLabel": "Произвольный",
+            "daysOfWeek": [
+                "Вс",
+                "Пн",
+                "Вт",
+                "Ср",
+                "Чт",
+                "Пт",
+                "Сб"
+            ],
+            "monthNames": [
+                "Январь",
+                "Февраль",
+                "Март",
+                "Апрель",
+                "Май",
+                "Июнь",
+                "Июль",
+                "Август",
+                "Сентябрь",
+                "Октябрь",
+                "Ноябрь",
+                "Декабрь"
+            ],
+            firstDay: 1
+        }});
+
+            $('#dateRangeInput').on('apply.daterangepicker', function(ev, picker) {
+                // Получаем выбранный диапазон дат
+                var originalData = allDate; 
+                var startDate = picker.startDate.format('YYYY-MM-DD');
+                var endDate = picker.endDate.format('YYYY-MM-DD');
+                console.log(originalData);
+                // Фильтруем данные в соответствии с выбранным диапазоном дат
+                var filteredData = originalData.filter(function(date) {
+                    return date >= startDate && date <= endDate;
+                });
+                
+                myChart.data.labels = filteredData;
+                console.log(filteredData);
+                myChart.update();
+
+                // Выводим отфильтрованные данные (в примере - просто в консоль)  
+            });
+        });
 </script>
+
 
 {% endblock %}
