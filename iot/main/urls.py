@@ -18,5 +18,6 @@ urlpatterns = [
     path('set_active_client/', views.set_active_client, name='set_active_client'),
     path('send_message/', views.send_message_to_client, name='send_message'),
     path('panels/panel_detail', views.panel_detail, name='panel_detail'),
+    path('get_recent_char/<int:panel_id>/', views.get_recent_char, name='get_recent_char'),
     # другие маршруты...
 ]
