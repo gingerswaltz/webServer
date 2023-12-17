@@ -8,6 +8,9 @@ import logging
 from django.core import serializers
 import requests
 import json
+from django.utils.translation import activate
+from django.utils.translation import get_language
+
 SERVER_URL = 'http://127.0.0.1:8080'  # адрес сервера
 
 
@@ -128,49 +131,93 @@ def socket(request):
     return render(request, "socket.html", {'night_mode': night_mode})
 
 
+# Самая последняя запись характеристик панели (JSON)
+def get_recent_char(request, panel_id):
+    try:
+        characteristics = Characteristics.objects.filter(
+            solar_panel_id=panel_id).latest('date', 'time')
+        # Устанавливаем русскую локаль
+        activate('ru')
+        current_locale = get_language()
+        print(current_locale)
+       
+        # Формируем данные для JSON-ответа
+        data = {
+            'horizontal_position': f"{characteristics.horizontal_position}°",
+            'vertical_position': f"{characteristics.vertical_position}°",
+            'consumed_power': f"{characteristics.consumed_power:.2f}",
+            'generated_power': f"{characteristics.generated_power:.2f} w",
+            'date': characteristics.date.strftime("%d %B %Y г."),
+            'time': characteristics.time.strftime("%H:%M"),
+        }
 
+        return JsonResponse(data)
+    except Characteristics.DoesNotExist:
+        return JsonResponse({'error': 'Characteristics not found'}, status=404)
 
 # panel_detail.html
 def panel_detail(request):
     night_mode = request.COOKIES.get('night_mode', 'off')
     # Извлечение ID панели из GET-запроса
     panel_id = request.GET.get('id')
-    # Самая последняя запись характеристик панели
-    characteristics = Characteristics.objects.filter(solar_panel_id=panel_id).latest('date', 'time')
+    characteristics = Characteristics.objects.filter(
+        solar_panel_id=panel_id).latest('date', 'time')
+
     # Получение объекта панели из базы данных или возврат 404, если такой панель не найдена
     panel = get_object_or_404(Solar_Panel, id=panel_id)
-    
+
     city = 'Chita'
     weather_data = get_weather(city)
 
     context = {
         'panel': panel,
         'night_mode': night_mode,
-        'char' : characteristics,
+        'char': characteristics,
         'weather_data': weather_data,  # Передача данных о погоде в контекст
     }
 
     return render(request, "panel_detail.html", context)
 
 
-
 # погода с OpenWeatherMap
 def get_weather(city):
-    api_key = 'f8e3947fda7d5cb9ce646407ff31d731' 
+    api_key = 'f8e3947fda7d5cb9ce646407ff31d731'
     base_url = 'http://api.openweathermap.org/data/2.5/weather'
-    
+
     params = {
         'q': city,
         'appid': api_key,
         'units': 'metric',  # Для получения погоды в метрической системе
         'lang': 'ru',  # Добавляем параметр lang для получения данных на русском
     }
-    
+
     response = requests.get(base_url, params=params)
     weather_data = response.json()
-    print(weather_data)
+    wind = wind_direction(weather_data['wind']['deg'])
+    weather_data['wind']['deg'] = wind
+
     return weather_data
 
+
+def wind_direction(degrees):
+    if degrees >= 337.5 or degrees < 22.5:
+        return 'Северный'
+    elif 22.5 <= degrees < 67.5:
+        return 'Северо-восточный'
+    elif 67.5 <= degrees < 112.5:
+        return 'Восточный'
+    elif 112.5 <= degrees < 157.5:
+        return 'Юго-восточный'
+    elif 157.5 <= degrees < 202.5:
+        return 'Южный'
+    elif 202.5 <= degrees < 247.5:
+        return 'Юго-западный'
+    elif 247.5 <= degrees < 292.5:
+        return 'Западный'
+    elif 292.5 <= degrees < 337.5:
+        return 'Северо-западный'
+    else:
+        return 'Неизвестное направление'
 
 
 # функции сервера
@@ -200,4 +247,3 @@ def send_message_to_client(request):
         return JsonResponse({"message": "Сообщение отправлено"})
     else:
         return JsonResponse({"error": "Ошибка при отправке сообщения"}, status=500)
-

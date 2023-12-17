@@ -9,27 +9,56 @@
       <p>{{ panel.port }}</p>
     </div>
     <div class="panel-block">
-      <h3>Актуальные данные</h3>
-      <p>Горизонтальное положение: {{ char.horizontal_position}}°</p>
-      <p>Вертикальное положение: {{ char.vertical_position }}°</p>
-      <p>Потребленная мощность: {{ char.consumed_power|floatformat:2 }} w</p>
-      <p>Выработанная мощность: {{ char.generated_power|floatformat:2 }} w</p>
-      <p>Дата обновления: {{ char.date }}</p>
-      <p>Время обновления: {{ char.time }}</p>
+      <h3>
+        Актуальные данные
+        <button onclick="location.href='table?id={{ panel.id }}'">
+          Полная статистика
+        </button>
+      </h3>
+      <p>
+        <strong>Горизонтальное положение:</strong>
+        <span id="horizontalPosition">{{ char.horizontal_position }}°</span>
+      </p>
+      <p>
+        <strong>Вертикальное положение:</strong>
+        <span id="verticalPosition">{{ char.vertical_position }}°</span>
+      </p>
+      <p>
+        <strong>Потребленная мощность:</strong>
+        <span id="consumedPower">{{ char.consumed_power|floatformat:2 }}</span>
+      </p>
+      <p>
+        <strong>Выработанная мощность:</strong>
+        <span id="generatedPower"
+          >{{ char.generated_power|floatformat:2 }} w</span
+        >
+      </p>
+      <p>
+        <strong>Дата обновления:</strong>
+        <span id="lastDate">{{ char.date }}</span>
+      </p>
+      <p>
+        <strong>Время обновления:</strong>
+        <span id="lastTime">{{ char.time }}</span>
+      </p>
+
+      <button id="refreshData">Обновить</button>
     </div>
     <div class="panel-block">
       <h3>Погода</h3>
       <p>Погода: {{ weather_data.weather.0.description }}</p>
       <p>Температура: {{ weather_data.main.temp }} °C</p>
-      {% comment %} todo: градусы направления ветра преобразовать. {% endcomment %}
-      <p>Ветер: {{ weather_data.wind.deg }}°, {{ weather_data.wind.speed }} м/с</p>
+      <p>
+        Ветер: {{ weather_data.wind.deg }}, {{ weather_data.wind.speed }} м/с
+      </p>
       <p>Облачность: {{ weather_data.clouds.all }} %</p>
     </div>
-    <!-- Добавьте другие блоки по аналогии -->
   </div>
 </div>
 
-<div class="panel-line" >
+{% comment %} todo: градусы направления ветра преобразовать. {% endcomment %}
+
+<div class="panel-line">
   <div class="panel-info">
     <div class="panel-block">
       <h3>Управление</h3>
@@ -55,146 +84,157 @@
     </div>
   </div>
 
-  <script>
-            document.addEventListener('DOMContentLoaded', function() {
-              // Инициализация кнопок как неактивных
-              console.log({{ panel.id }});
-              setActiveClient({{ panel.id }});
-            });
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+  console.log({{ panel.id }});
+  setActiveClient({{ panel.id }});
+});
 
+function setActiveClient(clientId) {
+  $.ajax({
+    url: "/set_active_client/",
+    type: "POST",
+    data: { client_id: clientId },
+    success: function(response) {
+      console.log("Активный клиент установлен: " + clientId);
+    },
+    error: function() {
+      console.error("Ошибка при установке активного клиента");
+    },
+  });
+}
 
-            function setActiveClient(clientId) {
-              $.ajax({
-                url: "/set_active_client/",
-                type: "POST",
-                data: { client_id: clientId },
-                success: function (response) {
-                  console.log("Активный клиент установлен: " + clientId);
-                },
-                error: function () {
-                  console.error("Ошибка при установке активного клиента");
-                },
-              });
-            }
+$(".control-button").click(function() {
+  var command = $(this).text().toLowerCase();
+  currentCommand = command;
+  if (
+    command === "up" ||
+    command === "down" ||
+    command === "left" ||
+    command === "right"
+  ) {
+    sendMessageToClient(command);
+  } else if (command === "reset") {
+    sendMessageToClient(command);
+  }
+});
 
-          $(".control-button").click(function () {
-            var command = $(this).text().toLowerCase();
-            currentCommand = command;
-            if (
-              command === "up" ||
-              command === "down" ||
-              command === "left" ||
-              command === "right"
-            ) {
-              sendMessageToClient(command);
-            } else if (command === "reset") {
-              sendMessageToClient(command);
-            }
-          });
-
-
-    function sendMessageToClient(message) {
-    const form = createDegreesModal();
-    if (!form) {
+function sendMessageToClient(message) {
+  const form = createDegreesModal();
+  if (!form) {
     console.error("Не удалось создать форму добавления");
     return;
-    }
-    // Показ модального окна
-    showModal();
-    // Добавление обработчика события 'submit' для формы
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const formData = new FormData(this);
-      const data = Object.fromEntries(formData.entries());
-              $.ajax({
-                url: "/send_message/",
-                type: "POST",
-                data: { message: message + " " + data.degrees },
-                success: function (response) {
-                  alert("Сообщение отправлено: " + message + " " + data.degrees); // todo: вывод например в заголовок блока
-                },
-                error: function () {
-                  alert("Ошибка при отправке сообщения");
-                },
-              });
-            }
-    )}
+  }
+  showModal();
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    $.ajax({
+      url: "/send_message/",
+      type: "POST",
+      data: { message: message + " " + data.degrees },
+      success: function(response) {
+        alert("Сообщение отправлено: " + message + " " + data.degrees);
+      },
+      error: function() {
+        alert("Ошибка при отправке сообщения");
+      },
+    });
+  });
+};
 
-    function createDegreesModal() {
-        let modalWrapper = document.getElementById("modalWrapper");
-        if (modalWrapper) {
-        modalWrapper.remove();
+function createDegreesModal() {
+  let modalWrapper = document.getElementById("modalWrapper");
+  if (modalWrapper) {
+    modalWrapper.remove();
+  }
+  modalWrapper = document.createElement("div");
+  modalWrapper.id = "modalWrapper";
+  document.body.appendChild(modalWrapper);
+
+  let formContainer = document.createElement("div");
+  formContainer.id = "addModal";
+
+  const form = document.createElement("form");
+  form.id = "addForm";
+
+  const label = document.createElement("label");
+  label.htmlFor = `addDegrees`;
+  label.textContent = `Градусы`;
+
+  const input = document.createElement("input");
+  input.type = "numeric";
+  input.id = `addDegrees`;
+  input.name = 'degrees';
+  form.appendChild(label);
+  form.appendChild(input);
+  form.appendChild(document.createElement("br"));
+
+  const submitButton = document.createElement("button");
+  submitButton.setAttribute("class", "button-glass");
+  submitButton.type = "submit";
+  submitButton.textContent = "Сохранить изменения";
+  form.appendChild(submitButton);
+
+  const cancelButton = document.createElement("button");
+  cancelButton.setAttribute("class", "close-button");
+  cancelButton.type = "button";
+  cancelButton.textContent = "Отмена";
+  cancelButton.onclick = function() {
+    closeModal();
+  };
+  form.appendChild(cancelButton);
+
+  formContainer.appendChild(form);
+  modalWrapper.appendChild(formContainer);
+
+  return form;
+}
+
+function showModal() {
+  const modal = document.getElementById("modalWrapper");
+  if (modal) {
+    modal.style.display = "flex";
+    console.log(modal);
+    setTimeout(() => {
+      modal.classList.add("show");
+    }, 10);
+  }
+}
+
+function closeModal() {
+  const modalWrapper = document.getElementById("modalWrapper");
+  if (modalWrapper) {
+    modalWrapper.classList.remove("show");
+    setTimeout(() => {
+      modalWrapper.style.display = "none";
+    }, 300);
+  }
+}
+
+$(document).ready(function() {
+  $('#refreshData').on('click', function() {
+    var panelId = {{ panel.id }}
+    $.ajax({
+      url: `/get_recent_char/${panelId}/`,
+      method: 'GET',
+      success: function(response) {
+        console.log(response);
+        $('#horizontalPosition').text(response.horizontal_position);
+        $('#verticalPosition').text(response.vertical_position);
+        $('#consumedPower').text(response.consumed_power);
+        $('#generatedPower').text(response.generated_power);
+        $('#lastDate').text(response.date);
+        $('#lastTime').text(response.time);
+      },
+      error: function(error) {
+        console.log(error);
       }
-          modalWrapper = document.createElement("div");
-          modalWrapper.id = "modalWrapper";
-          document.body.appendChild(modalWrapper);
+    });
+  });
+});
 
-          let formContainer = document.createElement("div");
-          formContainer.id = "addModal";
-
-        // Создание формы
-        const form = document.createElement("form");
-        form.id = "addForm";
-        // Динамическое создание полей для редактирования
-          const label = document.createElement("label");
-          label.htmlFor = `addDegrees`;
-          label.textContent = `Градусы`;
-
-
-          const input = document.createElement("input");
-          input.type = "numeric";
-          input.id = `addDegrees`;
-          input.name = 'degrees';
-          form.appendChild(label);
-          form.appendChild(input);
-          form.appendChild(document.createElement("br"));
-
-
-        // Добавление кнопки отправки
-        const submitButton = document.createElement("button");
-        submitButton.setAttribute("class", "button-glass");
-        submitButton.type = "submit";
-        submitButton.textContent = "Сохранить изменения";
-        form.appendChild(submitButton);
-
-        // Добавление кнопки отмены
-        const cancelButton = document.createElement("button");
-        cancelButton.setAttribute("class", "close-button");
-        cancelButton.type = "button"; // Установите тип button, чтобы предотвратить отправку формы
-        cancelButton.textContent = "Отмена";
-        cancelButton.onclick = function () {
-          closeModal(); // Закрытие модального окна
-        };
-        form.appendChild(cancelButton);
-
-        formContainer.appendChild(form);
-        modalWrapper.appendChild(formContainer);
-
-        return form;
-      }
-
-      // показ формы редактирования
-      function showModal() {
-        const modal = document.getElementById("modalWrapper");
-        if (modal) {
-          modal.style.display = "flex";
-          // modal.className='editModal';
-          console.log(modal);
-          setTimeout(() => {
-            modal.classList.add("show");
-          }, 10);
-        }
-      }
-      // закрытие модальной формы
-      function closeModal() {
-        const modalWrapper = document.getElementById("modalWrapper");
-        if (modalWrapper) {
-          modalWrapper.classList.remove("show");
-          setTimeout(() => {
-            modalWrapper.style.display = "none";
-          }, 300); // Задержка для завершения анимации прежде чем скрыть модальное окно
-        }
-      }
   </script>
 
   {% endblock %}
