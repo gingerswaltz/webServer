@@ -55,11 +55,13 @@ def get_characteristics_data_by_panel(request, panel_id):
     # Подготовка данных для графика
     generated_power = [c.generated_power for c in characteristics]
     consumed_power = [c.consumed_power for c in characteristics]
+    date = [c.date for c in reversed(characteristics)]
 
     # Сериализация данных в JSON
     data = {
         'generated_power': generated_power,
-        'consumed_power': consumed_power
+        'consumed_power': consumed_power,
+        'date': date,
     }
     return JsonResponse(data)
 
@@ -69,11 +71,13 @@ def get_general_characteristics_data(request):
     characteristics = Characteristics.objects.all().order_by('-date', 'time')
     generated_power = [c.generated_power for c in characteristics]
     consumed_power = [c.consumed_power for c in characteristics]
+    date = [c.date for c in reversed(characteristics)]
 
     # Сериализация данных в JSON для графика
     data = {
         'generated_power': generated_power,
-        'consumed_power': consumed_power
+        'consumed_power': consumed_power,
+        'date': date,
     }
     return JsonResponse(data)
 

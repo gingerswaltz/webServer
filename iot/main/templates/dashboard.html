@@ -6,7 +6,7 @@
 <h1>Анализ Энергопотребления</h1>
 
 <!-- Элемент canvas для графика -->
-<canvas id="powerChart" width="800" height="400"></canvas>
+<canvas id="powerChart" width="800" height="200"></canvas>
 <!-- Кнопка для отображения общей статистики -->
 <button id="showOverallStats">Показать общую статистику</button>
 <!-- Подключение Chart.js -->
@@ -20,12 +20,18 @@
   </select>
 </div>
 
+<button id="week">Неделя</button>
+<button id="month">Месяц</button>
+
+
 <!-- JavaScript для создания графика -->
 <script>
   var generated_power = []; // изначально ничего не отображаем
   var consumed_power = [];
+  var allDate = [];
   var ctx = document.getElementById("powerChart").getContext("2d");
-  var myChart = new Chart(ctx, {
+  
+  var options = {
     type: "line",
     data: {
       labels: ["", "", ""], // Замените на актуальные метки
@@ -94,7 +100,9 @@
         position: "top", // Позиция легенды
       },
     },
-  });
+  };
+  
+  var myChart = new Chart(ctx, options);
 
   document
     .getElementById("panelSelect")
@@ -106,7 +114,8 @@
           // Обновляем данные графика
           myChart.data.datasets[0].data = data.generated_power;
           myChart.data.datasets[1].data = data.consumed_power;
-
+          myChart.data.labels = data.date;
+          allDate = data.date;
           // Перерисовываем график
           myChart.update();
         });
@@ -120,9 +129,57 @@
         .then((data) => {
           myChart.data.datasets[0].data = data.generated_power;
           myChart.data.datasets[1].data = data.consumed_power;
+          myChart.data.labels = data.date;
+          allDate = data.date;
 
-          myChart.update();
+          myChart.update(); 
+          console.log(allDate);
         });
     });
+
+
+  // Следующие 2 скрипта фильтруют список date за неделю и месяц по сегодняшней дате
+  document
+    .getElementById("week")
+    .addEventListener("click", function () {
+      var dateList = allDate;
+      var todayDate = new Date();
+      var filteredList = dateList.filter(function(dateString) {
+        // Преобразуем строку даты в объект Date
+        var date = new Date(dateString);
+
+        // Вычисляем разницу в днях между сегодняшней датой и датой в списке
+        var daysDifference = Math.floor((todayDate - date) / (24 * 60 * 60 * 1000));
+
+        // Оставляем только те элементы, которые находятся в пределах последней недели
+        return daysDifference <= 7;
+      });
+
+      myChart.data.labels = filteredList;
+      console.log(filteredList);
+      myChart.update();
+    });
+
+    document
+    .getElementById("month")
+    .addEventListener("click", function () {
+      var dateList = allDate;
+      var todayDate = new Date();
+      var filteredList = dateList.filter(function(dateString) {
+        // Преобразуем строку даты в объект Date
+        var date = new Date(dateString);
+
+        // Вычисляем разницу в днях между сегодняшней датой и датой в списке
+        var monthsDifference = (todayDate.getMonth() + 12 * todayDate.getFullYear()) - (date.getMonth() + 12 * date.getFullYear());
+
+        // Оставляем только те элементы, которые находятся в пределах последней недели
+        return monthsDifference <= 1;
+      });
+
+      myChart.data.labels = filteredList;
+      console.log(filteredList);
+      myChart.update();
+    });
 </script>
+
 {% endblock %}
