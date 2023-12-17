@@ -62,9 +62,31 @@ body.dark .panel-block p {
     width: 50%;
   }
 
-  
+  div#modalWrapper {
+    position: fixed; /* Фиксированное позиционирование */
+    top: 0;
+    left: 0;
+    width: 100%; /* Занимает всю ширину экрана */
+    height: 100%; /* Занимает всю высоту экрана */
+    background-color: rgba(0, 0, 0, 0.5); /* Светло-серый затемненный фон */
+    display: flex;
+    justify-content: center; /* Горизонтальное центрирование */
+    align-items: center; /* Вертикальное центрирование */
+    z-index: 999; /* Убедитесь, что оболочка будет ниже модального окна */
+    display: none; /* Изначально скрыто */
+    opacity: 0; /* Начальная прозрачность */
+    transition: opacity 0.3s ease; /* Плавное изменение прозрачности */
+
+}
+
+
+div#modalWrapper.show {
+    opacity: 1; /* Полная видимость при активации */
+    
+}
+
 /* Стили для модального окна */
-#valueInputContainer {
+#addModal {
     width: 300px; /* Или другой подходящий размер */
     background: #333; /* Белый фон для лучшей видимости */
     border-radius: 10px; /* Скругленные края */
@@ -102,5 +124,5 @@ body.dark .panel-block p {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Плавное изменение фона и тени */
-
+    align-self: center;
 }
