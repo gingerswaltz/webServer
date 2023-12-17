@@ -5,23 +5,34 @@
     <div class="panel-block">
       <h3>ID панели</h3>
       <p>{{ panel.id }}</p>
-    </div>
-    <div class="panel-block">
-      <h3>IP-адрес</h3>
       <p>{{ panel.ip_address }}</p>
+      <p>{{ panel.port }}</p>
     </div>
     <div class="panel-block">
-      <h3>Порт</h3>
-      <p>{{ panel.port }}</p>
+      <h3>Актуальные данные</h3>
+      <p>Горизонтальное положение: {{ char.horizontal_position}}°</p>
+      <p>Вертикальное положение: {{ char.vertical_position }}°</p>
+      <p>Потребленная мощность: {{ char.consumed_power|floatformat:2 }} w</p>
+      <p>Выработанная мощность: {{ char.generated_power|floatformat:2 }} w</p>
+      <p>Дата обновления: {{ char.date }}</p>
+      <p>Время обновления: {{ char.time }}</p>
+    </div>
+    <div class="panel-block">
+      <h3>Погода</h3>
+      <p>Погода: {{ weather_data.weather.0.description }}</p>
+      <p>Температура: {{ weather_data.main.temp }} °C</p>
+      {% comment %} todo: градусы направления ветра преобразовать. {% endcomment %}
+      <p>Ветер: {{ weather_data.wind.deg }}°, {{ weather_data.wind.speed }} м/с</p>
+      <p>Облачность: {{ weather_data.clouds.all }} %</p>
     </div>
     <!-- Добавьте другие блоки по аналогии -->
   </div>
 </div>
 
-<div class="panel-line" style="padding-top: 350px">
+<div class="panel-line" >
   <div class="panel-info">
     <div class="panel-block">
-      <h3>Кавасаки</h3>
+      <h3>Управление</h3>
       <p>
         <!-- Контейнер для управляющих кнопок -->
       </p>

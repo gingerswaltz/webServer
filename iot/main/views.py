@@ -128,6 +128,51 @@ def socket(request):
     return render(request, "socket.html", {'night_mode': night_mode})
 
 
+
+
+# panel_detail.html
+def panel_detail(request):
+    night_mode = request.COOKIES.get('night_mode', 'off')
+    # Извлечение ID панели из GET-запроса
+    panel_id = request.GET.get('id')
+    # Самая последняя запись характеристик панели
+    characteristics = Characteristics.objects.filter(solar_panel_id=panel_id).latest('date', 'time')
+    # Получение объекта панели из базы данных или возврат 404, если такой панель не найдена
+    panel = get_object_or_404(Solar_Panel, id=panel_id)
+    
+    city = 'Chita'
+    weather_data = get_weather(city)
+
+    context = {
+        'panel': panel,
+        'night_mode': night_mode,
+        'char' : characteristics,
+        'weather_data': weather_data,  # Передача данных о погоде в контекст
+    }
+
+    return render(request, "panel_detail.html", context)
+
+
+
+# погода с OpenWeatherMap
+def get_weather(city):
+    api_key = 'f8e3947fda7d5cb9ce646407ff31d731' 
+    base_url = 'http://api.openweathermap.org/data/2.5/weather'
+    
+    params = {
+        'q': city,
+        'appid': api_key,
+        'units': 'metric',  # Для получения погоды в метрической системе
+        'lang': 'ru',  # Добавляем параметр lang для получения данных на русском
+    }
+    
+    response = requests.get(base_url, params=params)
+    weather_data = response.json()
+    print(weather_data)
+    return weather_data
+
+
+
 # функции сервера
 def get_connected_clients(request):
     response = requests.get(f"{SERVER_URL}/clients")
@@ -156,17 +201,3 @@ def send_message_to_client(request):
     else:
         return JsonResponse({"error": "Ошибка при отправке сообщения"}, status=500)
 
-def panel_detail(request):
-    night_mode = request.COOKIES.get('night_mode', 'off')
-    # Извлечение ID панели из GET-запроса
-    panel_id = request.GET.get('id')
-
-    # Получение объекта панели из базы данных или возврат 404, если такой панель не найдена
-    panel = get_object_or_404(Solar_Panel, id=panel_id)
-    
-    context = {
-        'panel': panel,
-        'night_mode': night_mode,
-    }
-
-    return render(request, "panel_detail.html", context)
