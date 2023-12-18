@@ -8,8 +8,7 @@ import logging
 from django.core import serializers
 import requests
 import json
-from django.utils.translation import activate
-from django.utils.translation import get_language
+from django.template.defaultfilters import date
 
 SERVER_URL = 'http://127.0.0.1:8080'  # адрес сервера
 
@@ -140,18 +139,13 @@ def get_recent_char(request, panel_id):
     try:
         characteristics = Characteristics.objects.filter(
             solar_panel_id=panel_id).latest('date', 'time')
-        # Устанавливаем русскую локаль
-        activate('ru')
-        current_locale = get_language()
-        print(current_locale)
-       
         # Формируем данные для JSON-ответа
         data = {
             'horizontal_position': f"{characteristics.horizontal_position}°",
             'vertical_position': f"{characteristics.vertical_position}°",
             'consumed_power': f"{characteristics.consumed_power:.2f}",
             'generated_power': f"{characteristics.generated_power:.2f} w",
-            'date': characteristics.date.strftime("%d %B %Y г."),
+            'date': date(characteristics.date, "DATE_FORMAT"),
             'time': characteristics.time.strftime("%H:%M"),
         }
 
