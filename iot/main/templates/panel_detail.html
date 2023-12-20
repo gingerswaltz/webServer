@@ -11,9 +11,9 @@
     <div class="panel-block">
       <h3>
         Актуальные данные
-        <button onclick="location.href='table?id={{ panel.id }}'">
-          Полная статистика
-        </button>
+        <a href="{% url 'table' %}?panel_id={{ panel.id }}">
+         <button>Перейти к таблице</button>
+        </a>
       </h3>
       <p>
         <strong>Горизонтальное положение:</strong>
@@ -45,18 +45,14 @@
       <button id="refreshData">Обновить</button>
     </div>
     <div class="panel-block">
-      <h3>Погода</h3>
-      <p>Погода: {{ weather_data.weather.0.description }}</p>
-      <p>Температура: {{ weather_data.main.temp }} °C</p>
-      <p>
-        Ветер: {{ weather_data.wind.deg }}, {{ weather_data.wind.speed }} м/с
-      </p>
-      <p>Облачность: {{ weather_data.clouds.all }} %</p>
-    </div>
-  </div>
+    <h3><strong>Погода</strong></h3>
+    <p><strong>Погода:</strong> <span id="weatherDescription"></span></p>
+    <p><strong>Температура:</strong> <span id="temperature"></span> °C</p>
+    <p><strong>Ветер:</strong> <span id="windSpeed"></span> м/с</p>
+    <p><strong>Облачность:</strong> <span id="cloudiness"></span>%</p>
 </div>
-
-{% comment %} todo: градусы направления ветра преобразовать. {% endcomment %}
+</div>
+</div>
 
 <div class="panel-line">
   <div class="panel-info">
@@ -235,7 +231,31 @@ $(document).ready(function() {
   });
 });
 
-  </script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Функция для выполнения AJAX-запроса
+    function getWeatherData() {
+        $.ajax({
+            url: '/get_weather/',
+            method: 'GET',
+            success: function(response) {
+                // Обновляем элементы на странице данными о погоде
+                console.log(response);
+                $('#weatherDescription').text(response.weather[0].description);
+                $('#temperature').text(response.main.temp);
+                $('#windSpeed').text(response.wind.speed);
+                $('#cloudiness').text(response.clouds.all);
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+    }
+
+    // Вызываем функцию для получения данных о погоде при загрузке страницы
+    getWeatherData();
+});
+</script>
 
   {% endblock %}
 </div>

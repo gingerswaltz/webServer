@@ -164,37 +164,49 @@ def panel_detail(request):
     # Получение объекта панели из базы данных или возврат 404, если такой панель не найдена
     panel = get_object_or_404(Solar_Panel, id=panel_id)
 
-    city = 'Chita'
-    weather_data = get_weather(city)
-
     context = {
         'panel': panel,
         'night_mode': night_mode,
         'char': characteristics,
-        'weather_data': weather_data,  # Передача данных о погоде в контекст
     }
 
     return render(request, "panel_detail.html", context)
 
 
-# погода с OpenWeatherMap
-def get_weather(city):
-    api_key = 'f8e3947fda7d5cb9ce646407ff31d731'
-    base_url = 'http://api.openweathermap.org/data/2.5/weather'
+def get_weather(request, city="Chita"):
+    try:
+        api_key = 'f8e3947fda7d5cb9ce646407ff31d731'
+        base_url = 'http://api.openweathermap.org/data/2.5/weather'
 
-    params = {
-        'q': city,
-        'appid': api_key,
-        'units': 'metric',  # Для получения погоды в метрической системе
-        'lang': 'ru',  # Добавляем параметр lang для получения данных на русском
-    }
+        params = {
+            'q': city,
+            'appid': api_key,
+            'units': 'metric',  # Для получения погоды в метрической системе
+            'lang': 'ru',  # Добавляем параметр lang для получения данных на русском
+        }
 
-    response = requests.get(base_url, params=params)
-    weather_data = response.json()
-    wind = wind_direction(weather_data['wind']['deg'])
-    weather_data['wind']['deg'] = wind
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()  # Генерирует исключение, если ответ содержит ошибку
 
-    return weather_data
+        weather_data = response.json()
+        wind = wind_direction(weather_data['wind']['deg'])
+        weather_data['wind']['deg'] = wind
+
+
+        return JsonResponse(weather_data)
+    except requests.exceptions.RequestException as e:
+        # Обработка исключений, связанных с запросом к API OpenWeatherMap
+        print(f"Ошибка при запросе к OpenWeatherMap: {e}")
+        return JsonResponse({'error': f"Ошибка при запросе к OpenWeatherMap: {e}"}, status=500)
+    except KeyError as e:
+        # Обработка исключений, связанных с отсутствием ожидаемых ключей в ответе API
+        print(f"Ошибка при обработке ответа OpenWeatherMap: {e}")
+        return JsonResponse({'error': f"Ошибка при обработке ответа OpenWeatherMap: {e}"}, status=500)
+    except Exception as e:
+        # Обработка других неожиданных исключений
+        print(f"Необработанная ошибка: {e}")
+        return JsonResponse({'error': f"Необработанная ошибка: {e}"}, status=500)
+
 
 
 def wind_direction(degrees):

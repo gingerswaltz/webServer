@@ -42,15 +42,18 @@
         {% endfor %}
     </select>
 </div>
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const filterSelect = document.getElementById('solarPanelFilter');
         const tableRows = document.querySelectorAll('.content-table tbody tr');
+        const urlParams = new URLSearchParams(window.location.search);
+        const panelIdFromUrl = urlParams.get('panel_id');
 
-        filterSelect.addEventListener('change', function() {
-            const selectedValue = this.value;
+        // Устанавливаем panel_id как выбранное значение, если оно есть
+        filterSelect.value = panelIdFromUrl ? panelIdFromUrl : "";
 
+        // Функция для фильтрации строк таблицы
+        function filterTable(selectedValue) {
             tableRows.forEach(row => {
                 const cellValue = row.cells[0].textContent.trim();
                 if (selectedValue === "" || cellValue === selectedValue) {
@@ -59,8 +62,18 @@
                     row.style.display = 'none'; // скрываем строку
                 }
             });
+        }
+
+        // Применяем фильтрацию сразу при загрузке страницы
+        filterTable(filterSelect.value);
+
+        // Обработчик событий для фильтра при изменении
+        filterSelect.addEventListener('change', function() {
+            filterTable(this.value);
         });
     });
 </script>
+
+
 
 {% endblock %}
