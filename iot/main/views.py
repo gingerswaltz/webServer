@@ -95,17 +95,24 @@ class CharTableView(View):
         char = Characteristics.objects.order_by('-date', '-time')
         solar_panels = Solar_Panel.objects.all().order_by('id')
         response = render(request, "table.html", {
-                          'characteristics': char, 'night_mode': night_mode, "solar_panels": solar_panels})
+                          'characteristics': char, 'night_mode': night_mode, "solar_panels": solar_panels,
+                          })
         response.set_cookie('night_mode', night_mode)
 
         return response
 
-
+# panels.html
 def solar_panels(request):
     night_mode = request.COOKIES.get('night_mode', 'off')
-
+    connected_clients=get_connected_clients(request)
+    # Декодирование содержимого JsonResponse и преобразование в Python-словарь
+    connected_clients_content = connected_clients.content.decode('utf-8')  # Получить содержимое как строку
+    connected_clients_data = json.loads(connected_clients_content)  # Преобразовать строку JSON в словарь
+    # Извлечение ключей из словаря
+    connected_clients = list(connected_clients_data.keys())
+    print (connected_clients)
     solar = Solar_Panel.objects.all().order_by('id')
-    return render(request, "panels.html", {'panels': solar, 'night_mode': night_mode})
+    return render(request, "panels.html", {'panels': solar, 'night_mode': night_mode, 'connected_clients': connected_clients})
 
 
 def characteristics_data(request):
@@ -160,7 +167,7 @@ def panel_detail(request):
     panel_id = request.GET.get('id')
     characteristics = Characteristics.objects.filter(
         solar_panel_id=panel_id).latest('date', 'time')
-
+    
     # Получение объекта панели из базы данных или возврат 404, если такой панель не найдена
     panel = get_object_or_404(Solar_Panel, id=panel_id)
 
@@ -232,10 +239,14 @@ def wind_direction(degrees):
 
 # функции сервера
 def get_connected_clients(request):
-    response = requests.get(f"{SERVER_URL}/clients")
-    if response.ok:
-        return JsonResponse(response.json())
-    else:
+    try:
+        response = requests.get(f"{SERVER_URL}/clients")
+        if response.ok:
+            print (response.json())
+            return JsonResponse(response.json())
+        else:
+            return JsonResponse({"error": "Ошибка при получении списка клиентов"}, status=500)
+    except Exception as e:
         return JsonResponse({"error": "Ошибка при получении списка клиентов"}, status=500)
 
 
