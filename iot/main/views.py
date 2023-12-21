@@ -4,7 +4,7 @@ from django.http import HttpResponse, JsonResponse
 from django import forms
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from .models import Solar_Panel, Characteristics
-import logging
+from django.views.decorators.csrf import csrf_exempt
 from django.core import serializers
 import requests
 import json
@@ -215,7 +215,7 @@ def get_weather(request, city="Chita"):
         return JsonResponse({'error': f"Необработанная ошибка: {e}"}, status=500)
 
 
-
+# направление ветра согласно полученным градусам с openweatherapi
 def wind_direction(degrees):
     if degrees >= 337.5 or degrees < 22.5:
         return 'Северный'
@@ -268,3 +268,21 @@ def send_message_to_client(request):
         return JsonResponse({"message": "Сообщение отправлено"})
     else:
         return JsonResponse({"error": "Ошибка при отправке сообщения"}, status=500)
+
+
+@csrf_exempt  # Если вы хотите отключить CSRF-защиту для этого представления (для упрощения)
+def update_client_status(request):
+    if request.method == 'POST':
+        try:
+            # Получаем данные из POST-запроса в формате JSON
+            data = json.loads(request.body)
+            print(data);
+            # Ваши действия с данными
+            # Например, можно сохранить их в базу данных или выполнить другие операции
+
+            # Возвращаем данные в виде JSON-ответа
+            return JsonResponse({"message": "Data received and processed successfully"})
+        except json.JSONDecodeError as e:
+            return JsonResponse({"error": "Invalid JSON data"}, status=400)
+    else:
+        return JsonResponse({"error": "Invalid request method"}, status=405)
