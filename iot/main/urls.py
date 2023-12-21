@@ -21,6 +21,5 @@ urlpatterns = [
     path('get_recent_char/<int:panel_id>/', views.get_recent_char, name='get_recent_char'),
     path('get_weather/', views.get_weather, name='get_weather'),
     path('update_client_status/', views.update_client_status, name='update_client_status'),
-    path('events/', include('django_eventstream.urls')),
     # другие маршруты...
 ]

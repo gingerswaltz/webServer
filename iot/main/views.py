@@ -7,7 +7,8 @@ from django.core import serializers
 import requests
 import json
 from django.template.defaultfilters import date
-from django_eventstream import send_event
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 SERVER_URL = 'http://127.0.0.1:8080'  # адрес сервера
 
@@ -107,6 +108,7 @@ def solar_panels(request):
     # Декодирование содержимого JsonResponse и преобразование в Python-словарь
     connected_clients_content = connected_clients.content.decode('utf-8')  # Получить содержимое как строку
     connected_clients_data = json.loads(connected_clients_content)  # Преобразовать строку JSON в словарь
+    
     # Извлечение ключей из словаря
     connected_clients = list(connected_clients_data.keys())
     print (connected_clients)
@@ -273,15 +275,21 @@ def send_message_to_client(request):
 def update_client_status(request):
     if request.method == 'POST':
         try:
+            # JSON структура
             data = json.loads(request.body)
-
-            # Предполагая, что data содержит 'header' и 'client_id'
-            header = data.get('header')
-            client_id = data.get('client_id')
-
-            # Отправка события
-            send_event('stream', 'message', {'header': header, 'client_id': client_id})
-
+            
+            # Получить слой каналов
+            channel_layer = get_channel_layer()
+            
+            # Асинхронно отправить сообщение в группу
+            async_to_sync(channel_layer.group_send)(
+                "client_status_group",
+                {
+                    "type": "send.client.status",  # Соответствует методу в Consumer
+                    "data": data  # Данные, которые вы хотите отправить
+                }
+            )
+            
             return JsonResponse({"message": "Data received and processed successfully"})
         except json.JSONDecodeError as e:
             return JsonResponse({"error": "Invalid JSON data"}, status=400)

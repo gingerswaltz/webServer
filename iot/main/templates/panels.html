@@ -39,57 +39,67 @@
   </table>
 
 
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  let websocket;
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      let eventSource;
-  
-      function connectSSE() {
-        eventSource = new EventSource("/events/stream");
-  
-        eventSource.onopen = function() {
-          console.log("SSE connection opened");
-        };
-  
-        eventSource.onerror = function() {
-          console.log("SSE error, attempting to reconnect...");
-          eventSource.close();
-          setTimeout(connectSSE, 3000); // Переподключение через 3 секунды
-        };
-  
-        eventSource.onmessage = function(event) {
-          const data = JSON.parse(event.data);
-          updateTable(data);
-        };
+  function connectWebSocket() {
+    // Подключение к WebSocket
+    websocket = new WebSocket('ws://' + window.location.host + '/ws/client-status/');
+
+    websocket.onopen = function() {
+      console.log("WebSocket connection opened");
+    };
+
+    websocket.onerror = function() {
+      console.log("WebSocket error, attempting to reconnect...");
+      websocket.close();
+      setTimeout(connectWebSocket, 3000); // Переподключение через 3 секунды
+    };
+
+    websocket.onclose = function(event) {
+      if (!event.wasClean) {
+        console.log("WebSocket connection closed unexpectedly. Reconnecting...");
+        setTimeout(connectWebSocket, 3000); // Переподключение через 3 секунды
       }
-  
-      function updateTable(data) {
-        if (!data || !data.client_id || !data.header) {
-          console.error("Invalid data received");
-          return;
+    };
+
+    websocket.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      updateTable(data);
+    };
+  }
+
+  function updateTable(data) {
+    if (!data || !data.client_id || !data.header) {
+      console.error("Invalid data received");
+      return;
+    }
+    console.log(data);
+    const rows = document.querySelectorAll(".content-table tbody tr");
+    rows.forEach(row => {
+      if (row.cells[0].textContent === data.client_id.toString()) {
+        const statusCell = row.cells[3];
+        switch(data.header) {
+          case "connect":
+            statusCell.textContent = "Подключен";
+            break;
+          case "disconnect":
+            statusCell.textContent = "Не подключен";
+            break;
+          default:
+            console.error("Unknown header type");
         }
-  
-        const rows = document.querySelectorAll(".content-table tbody tr");
-        rows.forEach(row => {
-          if (row.cells[0].textContent === data.client_id) {
-            const statusCell = row.cells[3];
-            switch(data.header) {
-              case "connect":
-                statusCell.textContent = "Подключен";
-                break;
-              case "disconnect":
-                statusCell.textContent = "Не подключен";
-                break;
-              default:
-                console.error("Unknown header type");
-            }
-          }
-        });
       }
-  
-      connectSSE();
     });
-  </script>
+  }
+
+  connectWebSocket();
+});
+</script>
+
+</div>
+
   
   {% endblock %}
 </div>
