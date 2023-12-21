@@ -37,5 +37,59 @@
       {% endfor %}
     </tbody>
   </table>
+
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      let eventSource;
+  
+      function connectSSE() {
+        eventSource = new EventSource("/events/stream");
+  
+        eventSource.onopen = function() {
+          console.log("SSE connection opened");
+        };
+  
+        eventSource.onerror = function() {
+          console.log("SSE error, attempting to reconnect...");
+          eventSource.close();
+          setTimeout(connectSSE, 3000); // Переподключение через 3 секунды
+        };
+  
+        eventSource.onmessage = function(event) {
+          const data = JSON.parse(event.data);
+          updateTable(data);
+        };
+      }
+  
+      function updateTable(data) {
+        if (!data || !data.client_id || !data.header) {
+          console.error("Invalid data received");
+          return;
+        }
+  
+        const rows = document.querySelectorAll(".content-table tbody tr");
+        rows.forEach(row => {
+          if (row.cells[0].textContent === data.client_id) {
+            const statusCell = row.cells[3];
+            switch(data.header) {
+              case "connect":
+                statusCell.textContent = "Подключен";
+                break;
+              case "disconnect":
+                statusCell.textContent = "Не подключен";
+                break;
+              default:
+                console.error("Unknown header type");
+            }
+          }
+        });
+      }
+  
+      connectSSE();
+    });
+  </script>
+  
   {% endblock %}
 </div>

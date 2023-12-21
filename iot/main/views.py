@@ -1,14 +1,13 @@
-from django.views.generic import TemplateView, View
+from django.views.generic import View
 from django.shortcuts import get_object_or_404, render
-from django.http import HttpResponse, JsonResponse
-from django import forms
-from django.views.generic import CreateView, UpdateView, DeleteView, ListView
+from django.http import JsonResponse
 from .models import Solar_Panel, Characteristics
 from django.views.decorators.csrf import csrf_exempt
 from django.core import serializers
 import requests
 import json
 from django.template.defaultfilters import date
+from django_eventstream import send_event
 
 SERVER_URL = 'http://127.0.0.1:8080'  # адрес сервера
 
@@ -274,13 +273,15 @@ def send_message_to_client(request):
 def update_client_status(request):
     if request.method == 'POST':
         try:
-            # Получаем данные из POST-запроса в формате JSON
             data = json.loads(request.body)
-            print(data);
-            # Ваши действия с данными
-            # Например, можно сохранить их в базу данных или выполнить другие операции
 
-            # Возвращаем данные в виде JSON-ответа
+            # Предполагая, что data содержит 'header' и 'client_id'
+            header = data.get('header')
+            client_id = data.get('client_id')
+
+            # Отправка события
+            send_event('stream', 'message', {'header': header, 'client_id': client_id})
+
             return JsonResponse({"message": "Data received and processed successfully"})
         except json.JSONDecodeError as e:
             return JsonResponse({"error": "Invalid JSON data"}, status=400)
