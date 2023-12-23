@@ -38,14 +38,16 @@ def send_data_to_server(host, port, message):
                 print(f'Sent: {response_message}')
         except json.JSONDecodeError as e:
             print("Error decoding JSON data from server:", e)
-
+        finally:
+            s.close()
+            
 if __name__ == "__main__":
     # server_host = '85.193.80.133'
     server_host = 'localhost'
     server_port = 1024
     print("Enter id: ")
     installation_number = input()
-
+    running = True  # Флаг для управления выполнением цикла
     try:
         installation_number = int(installation_number)
     except ValueError:
@@ -55,7 +57,7 @@ if __name__ == "__main__":
     current_date = datetime.now().strftime("%Y-%m-%d")
     current_time = datetime.now().strftime("%H:%M")
     generated_power = random.uniform(50, 150)
-    consumed_power = random.uniform(50, 150)
+    consumed_power = random.uniform(50, 100)
     vertical_position = random.randint(1, 180)
     horizontal_position = random.randint(1, 180)
 
@@ -71,4 +73,9 @@ if __name__ == "__main__":
         "solar_panel_id": installation_number
     }
 
-    send_data_to_server(server_host, server_port, client_data)
+    while running:
+        try:
+            send_data_to_server(server_host, server_port, client_data)
+        except KeyboardInterrupt as e:
+            print("\nCtrl+C detected. Exiting gracefully.")
+            running=False

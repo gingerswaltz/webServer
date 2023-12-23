@@ -10,6 +10,7 @@ import json
 from django.template.defaultfilters import date
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 SERVER_URL = 'http://127.0.0.1:8080'  # адрес интерфейса TCP сервера
 
@@ -95,8 +96,24 @@ class CharTableView(View):
 
         char = Characteristics.objects.order_by('-date', '-time')
         solar_panels = Solar_Panel.objects.all().order_by('id')
+
+        # Инициализация пагинатора на 10 элементов/страница
+        paginator = Paginator(char, 10)
+        page_number=request.GET.get('page')
+
+        try:
+            characteristics=paginator.page(page_number)
+        except PageNotAnInteger:
+            # Если номер страницы не является целым числом, отображаем первую страницу
+            characteristics = paginator.page(1)
+        except EmptyPage:
+             # Если страница находится за пределами доступных страниц, отображаем последнюю страницу
+            characteristics = paginator.page(paginator.num_pages)
+
         response = render(request, "table.html", {
-                          'characteristics': char, 'night_mode': night_mode, "solar_panels": solar_panels,
+                          'characteristics': characteristics, 
+                          'night_mode': night_mode, 
+                          "solar_panels": solar_panels,
                           })
         response.set_cookie('night_mode', night_mode)
 

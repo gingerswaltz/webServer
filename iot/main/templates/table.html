@@ -35,6 +35,33 @@
             {% endfor %}
         </tbody>
     </table>
+    <!-- Пагинация -->
+    <div class="pagination">
+        <span class="step-links">
+            {% if characteristics.has_next %}
+
+            <form action="" method="get">
+                    <button type="submit" name="page" value="{{ characteristics.next_page_number }}">Следующая</button>
+            </form>
+            {% endif %}
+            {% if characteristics.has_previous %}
+                <form action="" method="get">
+                    <button type="submit" name="page" value="1">&laquo; Первая</button>
+                    <button type="submit" name="page" value="{{ characteristics.previous_page_number }}">Предыдущая</button>
+                </form>
+            {% endif %}
+            
+            <span class="current">
+                Страница {{ characteristics.number }} из {{ characteristics.paginator.num_pages }}
+            </span>               
+        </span>
+        <div>
+        {% if characteristics.has_next %}
+        <button type="submit" name="page" value="{{ characteristics.paginator.num_pages }}">Последняя &raquo;</button>
+        {% endif %}
+        </div>
+    </div>
+    <!-- Фильтр установок -->
     <select class="table-filter" id="solarPanelFilter">
         <option value="">Все установки</option>
         {% for panel in solar_panels %}

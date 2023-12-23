@@ -19,13 +19,8 @@
         <td>{{ panel.id }}</td>
         <td>{{ panel.ip_address }}</td>
         <td>{{ panel.port }}</td>
-        <td>
-          {% if panel.id|stringformat:"s" in connected_clients %}
-      Подключен
-    {% else %}
-      Не подключен
-    {% endif %}
-        </td>
+       <td style="{% if panel.id|stringformat:"s" in connected_clients %}background-color: #269926;{% else %}background-color: #ffcccc;{% endif %}"|safe>
+
         <td>
            <button onclick="location.href='panel_detail?id={{ panel.id }}'">Управлять</button>
         </td>
@@ -87,10 +82,10 @@ document.addEventListener("DOMContentLoaded", function() {
         portCell.textContent=data.port.toString();
         switch(data.header) {
           case "connect":
-            statusCell.textContent = "Подключен";
+             statusCell.style.backgroundColor = "#269926"; // Устанавливаем зеленый цвет
             break;
           case "disconnect":
-            statusCell.textContent = "Не подключен";
+            statusCell.style.backgroundColor = "#ffcccc"; // Устанавливаем красный цвет
             break;
           default:
             console.error("Unknown header type");
