@@ -5,9 +5,10 @@ class Solar_Panel(models.Model):
     id = models.IntegerField(primary_key=True)  # id установки
     ip_address = models.CharField(max_length=15, default='')  # адрес
     port = models.CharField(max_length=5, default='')  # порт установки
-    coordinates = models.CharField()  # координаты
-    description = models.TextField()  # описание
-    type = models.TextField()  # тип установки (поворотная/неповоротная)
+    coordinates = models.CharField(null=True, blank=True)  # координаты
+    description = models.TextField(null=True, blank=True)  # описание
+    type = models.TextField(null=True, blank=True)  # тип установки (поворотная/неповоротная)
+
 
     class Meta:
         ordering = ['-id']
@@ -24,10 +25,11 @@ class Characteristics(models.Model):
     consumed_power = models.FloatField()
     vertical_position = models.IntegerField()
     horizontal_position = models.IntegerField()
-    status = models.TextField()  # on off etc
-    options = models.TextField()  # в заметках
-    weather = models.TextField()  # берется с сайта.
-    battery = models.FloatField()  # заряд батареи
+    status = models.TextField(null=True, blank=True)  # on off etc
+    options = models.TextField(null=True, blank=True)  # в заметках
+    weather = models.TextField(null=True, blank=True)  # берется с сайта
+    battery = models.FloatField(null=True)  # заряд батареи
+
     solar_panel = models.ForeignKey(
         Solar_Panel, on_delete=models.RESTRICT, null=True, blank=True)
 

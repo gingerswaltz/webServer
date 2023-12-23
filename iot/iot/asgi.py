@@ -1,8 +1,7 @@
 # iot/asgi.py
 import os
 from channels.routing import ProtocolTypeRouter, URLRouter
-import sys
-
+# todo: doc
 
 from main.routing import websocket_urlpatterns
 

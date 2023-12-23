@@ -1,3 +1,4 @@
+import time
 from django.views.generic import View
 from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
@@ -10,9 +11,9 @@ from django.template.defaultfilters import date
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
-SERVER_URL = 'http://127.0.0.1:8080'  # адрес сервера
+SERVER_URL = 'http://127.0.0.1:8080'  # адрес интерфейса TCP сервера
 
-
+# Класс представления Dashboard
 class DashboardView(View):
     def get(self, request, *args, **kwargs):
         solar_panels = Solar_Panel.objects.all().order_by('id')
@@ -49,9 +50,9 @@ class DashboardView(View):
             response.set_cookie('night_mode', night_mode)
             return response
 
-
+# # Получение данных по конкретной солнечной установке
 def get_characteristics_data_by_panel(request, panel_id):
-    # Получение данных по конкретной солнечной установке
+    # фильтруем по переданному panel id.
     characteristics = Characteristics.objects.filter(solar_panel_id=panel_id)
 
     # Подготовка данных для графика
@@ -83,7 +84,7 @@ def get_general_characteristics_data(request):
     }
     return JsonResponse(data)
 
-
+# Класс представления table.html
 class CharTableView(View):
     def get(self, request, *args, **kwargs):
         night_mode = request.COOKIES.get('night_mode', 'off')
@@ -104,18 +105,20 @@ class CharTableView(View):
 # panels.html
 def solar_panels(request):
     night_mode = request.COOKIES.get('night_mode', 'off')
-    connected_clients=get_connected_clients(request)
+    connected_clients = get_connected_clients(request)
     # Декодирование содержимого JsonResponse и преобразование в Python-словарь
-    connected_clients_content = connected_clients.content.decode('utf-8')  # Получить содержимое как строку
-    connected_clients_data = json.loads(connected_clients_content)  # Преобразовать строку JSON в словарь
-    
+    connected_clients_content = connected_clients.content.decode(
+        'utf-8')  # Получить содержимое как строку
+    # Преобразовать строку JSON в словарь
+    connected_clients_data = json.loads(connected_clients_content)
+
     # Извлечение ключей из словаря
     connected_clients = list(connected_clients_data.keys())
-    print (connected_clients)
+    print(connected_clients)
     solar = Solar_Panel.objects.all().order_by('id')
     return render(request, "panels.html", {'panels': solar, 'night_mode': night_mode, 'connected_clients': connected_clients})
 
-
+# ??? TODO DOC (ALEXEY)
 def characteristics_data(request):
     # Get the selected solar panel if provided
     selected_panel_id = request.GET.get('solar_panel')
@@ -134,7 +137,7 @@ def characteristics_data(request):
 
     return JsonResponse(data)
 
-
+# устарело: представление socket.html
 def socket(request):
     night_mode = request.COOKIES.get('night_mode', 'off')
 
@@ -168,7 +171,7 @@ def panel_detail(request):
     panel_id = request.GET.get('id')
     characteristics = Characteristics.objects.filter(
         solar_panel_id=panel_id).latest('date', 'time')
-    
+
     # Получение объекта панели из базы данных или возврат 404, если такой панель не найдена
     panel = get_object_or_404(Solar_Panel, id=panel_id)
 
@@ -180,27 +183,28 @@ def panel_detail(request):
 
     return render(request, "panel_detail.html", context)
 
-
+# получение погоды (OpenWeatherAPI)
 def get_weather(request, city="Chita"):
     try:
-        api_key = 'f8e3947fda7d5cb9ce646407ff31d731'
-        base_url = 'http://api.openweathermap.org/data/2.5/weather'
+        api_key = 'f8e3947fda7d5cb9ce646407ff31d731'  # ключ для доступа
+        base_url = 'http://api.openweathermap.org/data/2.5/weather'  # базовая ссылка к api
 
+        # доп. параметры добавляемые к базовой ссылке
         params = {
-            'q': city,
-            'appid': api_key,
+            'q': city,  # город по умолчанию Чита
+            'appid': api_key,  # ключ доступа
             'units': 'metric',  # Для получения погоды в метрической системе
             'lang': 'ru',  # Добавляем параметр lang для получения данных на русском
         }
 
-        response = requests.get(base_url, params=params)
+        response = requests.get(base_url, params=params)  # запрос к api погоды
         response.raise_for_status()  # Генерирует исключение, если ответ содержит ошибку
 
-        weather_data = response.json()
+        weather_data = response.json()  # парсим погоду с запроса к api
+        # получаем направление ветра, преобразуем его из градусного в обычный вид
         wind = wind_direction(weather_data['wind']['deg'])
+        # на интерфейс передаем обычный вид направления ветра
         weather_data['wind']['deg'] = wind
-
-
         return JsonResponse(weather_data)
     except requests.exceptions.RequestException as e:
         # Обработка исключений, связанных с запросом к API OpenWeatherMap
@@ -238,19 +242,21 @@ def wind_direction(degrees):
         return 'Неизвестное направление'
 
 
-# функции сервера
+### функции TCP сервера
+
+# получить список клиентов и их новые данные (ip, port)
 def get_connected_clients(request):
     try:
         response = requests.get(f"{SERVER_URL}/clients")
         if response.ok:
-            print (response.json())
+            print(response.json())
             return JsonResponse(response.json())
         else:
             return JsonResponse({"error": "Ошибка при получении списка клиентов"}, status=500)
     except Exception as e:
         return JsonResponse({"error": "Ошибка при получении списка клиентов"}, status=500)
 
-
+# Ставим активного клиента (которому сообщение отправляем)
 def set_active_client(request):
     client_id = request.POST.get('client_id')
     response = requests.post(
@@ -260,7 +266,7 @@ def set_active_client(request):
     else:
         return JsonResponse({"error": "Ошибка при установке активного клиента"}, status=500)
 
-
+# Отправка сообщения
 def send_message_to_client(request):
     message = request.POST.get('message')
     response = requests.post(
@@ -271,16 +277,24 @@ def send_message_to_client(request):
         return JsonResponse({"error": "Ошибка при отправке сообщения"}, status=500)
 
 
-@csrf_exempt  # Если вы хотите отключить CSRF-защиту для этого представления (для упрощения)
+# Метод, выполняемый при получении сигнала о подключении/отключении клиента, передаёт информацию в представление websocket
+@csrf_exempt
 def update_client_status(request):
+
+    # Задержка выполнения представления на 0.5 секунд, чтобы успели данные по установке обновиться
+    time.sleep(0.5)
     if request.method == 'POST':
         try:
             # JSON структура
             data = json.loads(request.body)
-            
+            # Получение нового порта и ip адреса
+            sol = Solar_Panel.objects.get(id=data['client_id'])
+            data['port'] = sol.port
+            data['address'] = sol.ip_address
+
             # Получить слой каналов
             channel_layer = get_channel_layer()
-            
+
             # Асинхронно отправить сообщение в группу
             async_to_sync(channel_layer.group_send)(
                 "client_status_group",
@@ -289,7 +303,7 @@ def update_client_status(request):
                     "data": data  # Данные, которые вы хотите отправить
                 }
             )
-            
+
             return JsonResponse({"message": "Data received and processed successfully"})
         except json.JSONDecodeError as e:
             return JsonResponse({"error": "Invalid JSON data"}, status=400)

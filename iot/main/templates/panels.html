@@ -79,7 +79,12 @@ document.addEventListener("DOMContentLoaded", function() {
     const rows = document.querySelectorAll(".content-table tbody tr");
     rows.forEach(row => {
       if (row.cells[0].textContent === data.client_id.toString()) {
+        const ipCell = row.cells[1];
+        const portCell = row.cells[2];
         const statusCell = row.cells[3];
+        
+        ipCell.textContent=data.address.toString();
+        portCell.textContent=data.port.toString();
         switch(data.header) {
           case "connect":
             statusCell.textContent = "Подключен";

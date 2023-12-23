@@ -1,7 +1,7 @@
 # consumers.py
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-
+# todo: doc
 class ClientStatusConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.channel_layer.group_add(
