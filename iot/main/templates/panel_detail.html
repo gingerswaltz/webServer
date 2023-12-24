@@ -71,14 +71,19 @@
       </div>
     </div>
     <div class="panel-block">
-      <h3>Каг</h3>
-      <p>...</p>
+      <h3>График за {{char.date}}</h3>
+      <canvas id="powerChart" width="400" height="200"></canvas>
     </div>
     <div class="panel-block">
       <h3>Крико</h3>
       <p></p>
     </div>
   </div>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -223,6 +228,7 @@ $(document).ready(function() {
         $('#generatedPower').text(response.generated_power);
         $('#lastDate').text(response.date);
         $('#lastTime').text(response.time);
+        updateChart();
       },
       error: function(error) {
         console.log(error);
@@ -255,7 +261,118 @@ document.addEventListener('DOMContentLoaded', function() {
     // Вызываем функцию для получения данных о погоде при загрузке страницы
     getWeatherData();
 });
-</script>
 
+  var generated_power = [];
+  var consumed_power =  [];
+  var allDate = [];
+  var ctx = document.getElementById("powerChart").getContext("2d");
+  
+  var options = {
+    type: "line",
+    data: {
+      labels: ["", "", ""], // Замените на актуальные метки
+      datasets: [
+        {
+          label: "Generated Power",
+          data: generated_power,
+          borderColor: "rgba(75, 192, 192, 1)",
+          backgroundColor: "rgba(75, 192, 192, 0.2)", // Заливка под линией
+          borderWidth: 2,
+          pointRadius: 3, // Размер точек
+          pointHoverRadius: 5, // Размер точек при наведении
+        },
+        {
+          label: "Consumed Power",
+          data: consumed_power,
+          borderColor: "rgba(255, 99, 132, 1)",
+          backgroundColor: "rgba(255, 99, 132, 0.2)", // Заливка под линией
+          borderWidth: 2,
+          pointRadius: 3, // Размер точек
+          pointHoverRadius: 5, // Размер точек при наведении
+        },
+      ],
+    },
+    options:{
+      responsive: true, // Адаптивность графика
+      title: {
+        display: true,
+        text: "Energy Consumption and Generation",
+      },
+      tooltips: {
+        mode: "index",
+        intersect: false,
+      },
+      hover: {
+        mode: "nearest",
+        intersect: true,
+      },
+    scales: {
+  xAxes: [
+    {
+    display: true,
+    scaleLabel: {
+      display: true,
+      labelString: 'Time'
+    }
+  }
+  ],
+  yAxes: [
+    {
+    display: true,
+    scaleLabel: {
+      display: true,
+      labelString: 'Power (kW)'
+    },
+    ticks: {
+      beginAtZero: true
+    }
+    // Другие настройки yAxes
+  }]
+},
+      animation: {
+        duration: 1000, // Длительность анимации
+      },
+      legend: {
+        position: "top", // Позиция легенды
+      },
+    },
+  };
+  
+  var myChart = new Chart(ctx, options);
+
+  document
+    .addEventListener('DOMContentLoaded', function () {     
+          updateChart();
+    });
+
+  function updateChart(data) {
+  var selectedPanel = {{panel.id|safe}};
+  var selectedDate = '{{ char.date|safe }}';
+
+  fetch("/get_characteristics_by_date/" + selectedPanel+'/'+String(selectedDate))
+  .then((response) => response.json())
+  .then((data) => {
+         
+  console.log("В функции обновления графика:");
+  console.log(data);
+
+
+ // Обновляем данные графика
+    if (Array.isArray(data.generated_power) && Array.isArray(data.consumed_power)) {
+        myChart.data.datasets[0].data = data.generated_power;
+        myChart.data.datasets[1].data = data.consumed_power;
+
+        // Устанавливаем метки для оси X
+        myChart.data.labels = data.time;
+
+        // Обновляем график
+        myChart.update();
+  } else {
+    console.error("Неверный формат данных для графика");
+  }
+  }
+  )}
+
+</script>
   {% endblock %}
 </div>

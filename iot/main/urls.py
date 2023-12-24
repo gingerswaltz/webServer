@@ -7,9 +7,11 @@ urlpatterns = [
     path('', DashboardView.as_view(), name='home'),
     path('get-characteristics-data/<int:panel_id>/', views.get_characteristics_data_by_panel,
          name='get-characteristics-data-by-panel'),  # сводка по конкретной панели
+       path('get_characteristics_by_date/<int:panel_id>/<str:selected_date>/', views.get_characteristics_by_date, name='get_characteristics_by_date'),
+  # сводка по конкретной панели и дате
     path('get-general-characteristics-data/', get_general_characteristics_data,
          name='get-general-characteristics-data'),  # сводка общая
-    path('socket/', views.socket, name='socket'),
+    path('socket/', views.socket, name='socket'), # устарело
     path('table/', CharTableView.as_view(), name='table'),
     path('panels/', views.solar_panels, name='panels'),
     path('characteristics-data/', characteristics_data,

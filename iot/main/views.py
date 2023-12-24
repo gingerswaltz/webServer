@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 from django.views.generic import View
 from django.shortcuts import get_object_or_404, render
@@ -51,7 +52,7 @@ class DashboardView(View):
             response.set_cookie('night_mode', night_mode)
             return response
 
-# # Получение данных по конкретной солнечной установке
+# Получение данных по конкретной солнечной установке
 def get_characteristics_data_by_panel(request, panel_id):
     # фильтруем по переданному panel id.
     characteristics = Characteristics.objects.filter(solar_panel_id=panel_id)
@@ -69,6 +70,28 @@ def get_characteristics_data_by_panel(request, panel_id):
     }
     return JsonResponse(data)
 
+# забор характеристик по заданному дню
+def get_characteristics_by_date(request, panel_id, selected_date):
+    try:
+        date_object = datetime.strptime(selected_date, '%Y-%m-%d')
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date format'}, status=400)
+
+    # Выбираем все записи Characteristics за переданный id и дату
+    characteristics = Characteristics.objects.filter(
+        solar_panel_id=panel_id, date=date_object)
+
+    generated_power = [c.generated_power for c in characteristics]
+    consumed_power = [c.consumed_power for c in characteristics]
+    date = [c.date for c in characteristics]
+    time =[c.time for c in characteristics]
+    data = {
+        'generated_power': generated_power,
+        'consumed_power': consumed_power,
+        'date': date,
+        'time': time,
+    }
+    return JsonResponse(data)
 
 def get_general_characteristics_data(request):
     # Получение всех записей из модели
