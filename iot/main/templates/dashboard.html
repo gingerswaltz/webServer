@@ -1,121 +1,259 @@
-{% extends "base.html" %}
-{% load static %}
+{% extends "base.html" %} 
+{% block title %} Главная страница {%endblock %} 
 
-{% block title %}Главная страница{% endblock %}
 
 {% block content %}
-    <h1>Анализ Энергопотребления</h1>
-    
-    <!-- Элемент canvas для графика -->
-    <canvas id="powerChart" width="800" height="400"></canvas>
-     <!-- Кнопка для отображения общей статистики -->
-    <button id="showOverallStats">Показать общую статистику</button>
-    <!-- Подключение Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <div>
-    <p>Выберите установку, чтобы получить информацию по ней:</p>
-    <select id="panelSelect">
-        {% for panel in solar_panels %}
-            <option value="{{ panel.id }}">{{ panel.id }}</option>
-        {% endfor %}
-    </select>
-    </div>
+<h1>Анализ Энергопотребления</h1>
 
-    <!-- JavaScript для создания графика -->
-    <script>
-        var generated_power = []; // изначально ничего не отображаем
-        var consumed_power = [];
-        var ctx = document.getElementById('powerChart').getContext('2d');
-        var myChart = new Chart(ctx, {
-    type: 'line',
+<!-- Элемент canvas для графика -->
+<canvas id="powerChart" width="800" height="200"></canvas>
+<!-- Кнопка для отображения общей статистики -->
+<button id="showOverallStats">Показать общую статистику</button>
+<!-- Подключение Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div>
+  <p>Выберите установку, чтобы получить информацию по ней:</p>
+  <select id="panelSelect">
+    {% for panel in solar_panels %}
+    <option value="{{ panel.id }}">{{ panel.id }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<button id="week">Неделя</button>
+<button id="month">Месяц</button>
+
+<label for="dateRangeInput">Выберите промежуток:</label>
+<input type="text" id="dateRangeInput" name="dateRangeInput">
+
+<script src="https://cdn.jsdelivr.net/npm/jquery"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker"></script>
+
+<!-- JavaScript для создания графика -->
+<script>
+  var generated_power = []; // изначально ничего не отображаем
+  var consumed_power = [];
+  var allDate = [];
+  var ctx = document.getElementById("powerChart").getContext("2d");
+  
+  var options = {
+    type: "line",
     data: {
-        labels: ['', '', ''], // Замените на актуальные метки
-        datasets: [{
-            label: 'Generated Power',
-            data: generated_power,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)', // Заливка под линией
-            borderWidth: 2,
-            pointRadius: 3, // Размер точек
-            pointHoverRadius: 5, // Размер точек при наведении
-        }, {
-            label: 'Consumed Power',
-            data: consumed_power,
-            borderColor: 'rgba(255, 99, 132, 1)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)', // Заливка под линией
-            borderWidth: 2,
-            pointRadius: 3, // Размер точек
-            pointHoverRadius: 5, // Размер точек при наведении
-        }]
+      labels: ["", "", ""], // Замените на актуальные метки
+      datasets: [
+        {
+          label: "Generated Power",
+          data: generated_power,
+          borderColor: "rgba(75, 192, 192, 1)",
+          backgroundColor: "rgba(75, 192, 192, 0.2)", // Заливка под линией
+          borderWidth: 2,
+          pointRadius: 3, // Размер точек
+          pointHoverRadius: 5, // Размер точек при наведении
+        },
+        {
+          label: "Consumed Power",
+          data: consumed_power,
+          borderColor: "rgba(255, 99, 132, 1)",
+          backgroundColor: "rgba(255, 99, 132, 0.2)", // Заливка под линией
+          borderWidth: 2,
+          pointRadius: 3, // Размер точек
+          pointHoverRadius: 5, // Размер точек при наведении
+        },
+      ],
     },
     options: {
-        responsive: true, // Адаптивность графика
-        title: {
+      responsive: true, // Адаптивность графика
+      title: {
+        display: true,
+        text: "Energy Consumption and Generation",
+      },
+      tooltips: {
+        mode: "index",
+        intersect: false,
+      },
+      hover: {
+        mode: "nearest",
+        intersect: true,
+      },
+      scales: {
+        xAxes: [
+          {
             display: true,
-            text: 'Energy Consumption and Generation'
-        },
-        tooltips: {
-            mode: 'index',
-            intersect: false,
-        },
-        hover: {
-            mode: 'nearest',
-            intersect: true
-        },
-        scales: {
-            xAxes: [{
-                display: true,
-                scaleLabel: {
-                    display: true,
-                    labelString: 'Time'
-                }
-            }],
-            yAxes: [{
-                display: true,
-                scaleLabel: {
-                    display: true,
-                    labelString: 'Power (kW)'
-                },
-                ticks: {
-                    beginAtZero: true,
-                }
-            }]
-        },
-        animation: {
-            duration: 1000, // Длительность анимации
-        },
-        legend: {
-            position: 'top', // Позиция легенды
-        },
-    }
-});
-       
-        document.getElementById('panelSelect').addEventListener('change', function() {
-            var selectedPanel = this.value;
-            fetch('/get-characteristics-data/' + selectedPanel)
-            .then(response => response.json())
-            .then(data => {
-                // Обновляем данные графика
-                myChart.data.datasets[0].data = data.generated_power;
-                myChart.data.datasets[1].data = data.consumed_power;
+            scaleLabel: {
+              display: true,
+              labelString: "Time",
+            },
+          },
+        ],
+        yAxes: [
+          {
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: "Power (kW)",
+            },
+            ticks: {
+              beginAtZero: true,
+            },
+          },
+        ],
+      },
+      animation: {
+        duration: 1000, // Длительность анимации
+      },
+      legend: {
+        position: "top", // Позиция легенды
+      },
+    },
+  };
+  
+  var myChart = new Chart(ctx, options);
 
-                // Перерисовываем график
-                myChart.update();
-            });
+  document
+    .getElementById("panelSelect")
+    .addEventListener("change", function () {
+      var selectedPanel = this.value;
+      fetch("/get-characteristics-data/" + selectedPanel)
+        .then((response) => response.json())
+        .then((data) => {
+          // Обновляем данные графика
+          myChart.data.datasets[0].data = data.generated_power;
+          myChart.data.datasets[1].data = data.consumed_power;
+          myChart.data.labels = data.date;
+          allDate = data.date;
+          // Перерисовываем график
+          myChart.update();
         });
-        
-        
-document.getElementById('showOverallStats').addEventListener('click', function() {
-    fetch('/get-general-characteristics-data/')
-    .then(response => response.json())
-    .then(data => {
-        myChart.data.datasets[0].data = data.generated_power;
-        myChart.data.datasets[1].data = data.consumed_power;
-
-        myChart.update();
     });
-});
 
     
-    </script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Функция для выполнения запроса и обновления данных
+  function fetchDataAndUpdateChart() {
+    fetch("/get-general-characteristics-data/")
+      .then((response) => response.json())
+      .then((data) => {
+        myChart.data.datasets[0].data = data.generated_power;
+        myChart.data.datasets[1].data = data.consumed_power;
+        myChart.data.labels = data.date;
+        allDate = data.date;
+
+        myChart.update(); 
+      });
+  }
+
+  // Выполнение запроса при загрузке страницы
+  fetchDataAndUpdateChart();
+
+  // Обработчик события нажатия кнопки
+  document.getElementById("showOverallStats").addEventListener('click', function() {
+    // Вызов функции для выполнения запроса и обновления данных
+    fetchDataAndUpdateChart();
+    // Ваша дополнительная логика при нажатии кнопки
+  });
+});
+
+
+
+  // Следующие 2 скрипта фильтруют список date за неделю и месяц по сегодняшней дате
+  document
+    .getElementById("week")
+    .addEventListener("click", function () {
+      var dateList = allDate;
+      var todayDate = new Date();
+      var filteredList = dateList.filter(function(dateString) {
+        // Преобразуем строку даты в объект Date
+        var date = new Date(dateString);
+
+        // Вычисляем разницу в днях между сегодняшней датой и датой в списке
+        var daysDifference = Math.floor((todayDate - date) / (24 * 60 * 60 * 1000));
+
+        // Оставляем только те элементы, которые находятся в пределах последней недели
+        return daysDifference <= 7;
+      });
+
+      myChart.data.labels = filteredList;
+      console.log(filteredList);
+      myChart.update();
+    });
+
+  document
+  .getElementById("month")
+  .addEventListener("click", function () {
+    var dateList = allDate;
+    var todayDate = new Date();
+    var filteredList = dateList.filter(function(dateString) {
+      // Преобразуем строку даты в объект Date
+      var date = new Date(dateString);
+
+      // Вычисляем разницу в днях между сегодняшней датой и датой в списке
+      var monthsDifference = (todayDate.getMonth() + 12 * todayDate.getFullYear()) - (date.getMonth() + 12 * date.getFullYear());
+
+      // Оставляем только те элементы, которые находятся в пределах последней недели
+      return monthsDifference <= 1;
+    });
+
+    myChart.data.labels = filteredList;
+
+    myChart.update();
+  });
+
+  //Инициализация input-календаря с выбором диапазона дат для графика
+  document.addEventListener("DOMContentLoaded", function() {
+            // Инициализируем daterangepicker для выбора промежутка дат
+            $('#dateRangeInput').daterangepicker({locale: {
+            format: 'DD.MM.YYYY',
+            "applyLabel": "Ок",
+            "cancelLabel": "Отмена",
+            "fromLabel": "От",
+            "toLabel": "До",
+            "customRangeLabel": "Произвольный",
+            "daysOfWeek": [
+                "Вс",
+                "Пн",
+                "Вт",
+                "Ср",
+                "Чт",
+                "Пт",
+                "Сб"
+            ],
+            "monthNames": [
+                "Январь",
+                "Февраль",
+                "Март",
+                "Апрель",
+                "Май",
+                "Июнь",
+                "Июль",
+                "Август",
+                "Сентябрь",
+                "Октябрь",
+                "Ноябрь",
+                "Декабрь"
+            ],
+            firstDay: 1
+        }});
+
+            $('#dateRangeInput').on('apply.daterangepicker', function(ev, picker) {
+                // Получаем выбранный диапазон дат
+                var originalData = allDate; 
+                var startDate = picker.startDate.format('YYYY-MM-DD');
+                var endDate = picker.endDate.format('YYYY-MM-DD');
+                console.log(originalData);
+                // Фильтруем данные в соответствии с выбранным диапазоном дат
+                var filteredData = originalData.filter(function(date) {
+                    return date >= startDate && date <= endDate;
+                });
+                
+                myChart.data.labels = filteredData;
+                console.log(filteredData);
+                myChart.update();
+
+                // Выводим отфильтрованные данные (в примере - просто в консоль)  
+            });
+        });
+</script>
+
+
 {% endblock %}

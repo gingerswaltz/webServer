@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 # Класс TCP Сервера
 class TCPServer(AbstractTCP.AbstractTCPServer):
-    def __init__(self, host: str, port: int, database_config: Dict[str, Any]):
+    def __init__(self, host: str, port: int, database_config: Dict[str, Any], disconnection_callback=None, connection_callback=None):
         super().__init__(host, port, database_config)
         self.server = None
         self.active_connections = {}  # Словарь активных подключений
@@ -19,6 +19,10 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         self.running = False  # Флаг состояния работы
         logging.basicConfig(level=logging.INFO,
                             format='%(asctime)s - %(levelname)s - %(message)s')
+        # Callback для уведомления интерфейсов об отключении
+        self.disconnection_callback = disconnection_callback
+        # Callback для уведомления интерфейсов о подключении
+        self.connection_callback = connection_callback
 
     async def start_server(self):
         self.server = await asyncio.start_server(self.handle_client_wrapper, self.host, self.port)
@@ -51,6 +55,7 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
                 # Обратите внимание, что здесь нет чтения ответа, это происходит в `listen_for_messages`
             except Exception as e:
                 logging.error(f"Error sending message to client ID {self.current_connection_id}: {e}")
+                await self.client_disconnect(self.current_connection_id)
         else:
             logging.error(f"No connection found for client ID {self.current_connection_id}")
 
@@ -67,9 +72,10 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         # Запись адреса клиента
         address = writer.get_extra_info('peername')
         logging.info(f"New client connected: {temp_client_id} (Address: {address})")
-
+        
         # Запуск фоновой корутины для чтения сообщений и ожидания сообщения `update`
         asyncio.create_task(connection.listen_for_messages())
+
 
 
     # Остановка сервера
@@ -114,6 +120,9 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         if client_id in self.active_connections:
             del self.active_connections[client_id]
             logging.info(f"Client {client_id} removed from active_connections.")
+        
+        if self.disconnection_callback:
+            await self.disconnection_callback(client_id)
     
     def update_client_mappings(self, old_id, new_id):
         """Обновление маппингов клиента после получения нового ID"""
@@ -122,8 +131,11 @@ class TCPServer(AbstractTCP.AbstractTCPServer):
         
         if old_id in self.active_connections:
             self.active_connections[new_id] = self.active_connections.pop(old_id)
-
+        
         logging.info(f"Client mappings updated from {old_id} to {new_id}")
+        # Вызов callback для уведомления о подключении клиента
+        if self.connection_callback:
+            asyncio.create_task(self.connection_callback(new_id))
 
 
 # Класс TCP подключения

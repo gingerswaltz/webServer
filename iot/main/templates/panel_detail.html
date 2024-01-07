@@ -1,0 +1,378 @@
+{% extends "base.html" %} 
+{% block content %}
+<div class="panel-line">
+  <div class="panel-info">
+    <div class="panel-block">
+      <h3>ID панели</h3>
+      <p>{{ panel.id }}</p>
+      <p>{{ panel.ip_address }}</p>
+      <p>{{ panel.port }}</p>
+    </div>
+    <div class="panel-block">
+      <h3>
+        Актуальные данные
+        <a href="{% url 'table' %}?panel_id={{ panel.id }}">
+         <button>Перейти к таблице</button>
+        </a>
+      </h3>
+      <p>
+        <strong>Горизонтальное положение:</strong>
+        <span id="horizontalPosition">{{ char.horizontal_position }}°</span>
+      </p>
+      <p>
+        <strong>Вертикальное положение:</strong>
+        <span id="verticalPosition">{{ char.vertical_position }}°</span>
+      </p>
+      <p>
+        <strong>Потребленная мощность:</strong>
+        <span id="consumedPower">{{ char.consumed_power|floatformat:2 }}</span>
+      </p>
+      <p>
+        <strong>Выработанная мощность:</strong>
+        <span id="generatedPower"
+          >{{ char.generated_power|floatformat:2 }} w</span
+        >
+      </p>
+      <p>
+        <strong>Дата обновления:</strong>
+        <span id="lastDate">{{ char.date }}</span>
+      </p>
+      <p>
+        <strong>Время обновления:</strong>
+        <span id="lastTime">{{ char.time }}</span>
+      </p>
+
+      <button id="refreshData">Обновить</button>
+    </div>
+    <div class="panel-block">
+    <h3><strong>Погода</strong></h3>
+    <p><strong>Погода:</strong> <span id="weatherDescription"></span></p>
+    <p><strong>Температура:</strong> <span id="temperature"></span> °C</p>
+    <p><strong>Ветер:</strong> <span id="windSpeed"></span> м/с</p>
+    <p><strong>Облачность:</strong> <span id="cloudiness"></span>%</p>
+</div>
+</div>
+</div>
+
+<div class="panel-line">
+  <div class="panel-info">
+    <div class="panel-block">
+      <h3>Управление</h3>
+      <p>
+        <!-- Контейнер для управляющих кнопок -->
+      </p>
+
+      <div class="control-buttons">
+        <button class="control-button" id="btnUp">Up</button>
+        <button class="control-button" id="btnDown">Down</button>
+        <button class="control-button" id="btnLeft">Left</button>
+        <button class="control-button" id="btnRight">Right</button>
+        <button class="control-button" id="btnReset">Reset</button>
+      </div>
+    </div>
+    <div class="panel-block">
+      <h3>График за {{char.date}}</h3>
+      <canvas id="powerChart" width="400" height="200"></canvas>
+    </div>
+    <div class="panel-block">
+      <h3>Крико</h3>
+      <p></p>
+    </div>
+  </div>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+  console.log({{ panel.id }});
+  setActiveClient({{ panel.id }});
+});
+
+function setActiveClient(clientId) {
+  $.ajax({
+    url: "/set_active_client/",
+    type: "POST",
+    data: { client_id: clientId },
+    success: function(response) {
+      console.log("Активный клиент установлен: " + clientId);
+    },
+    error: function() {
+      console.error("Ошибка при установке активного клиента");
+    },
+  });
+}
+
+$(".control-button").click(function() {
+  var command = $(this).text().toLowerCase();
+  currentCommand = command;
+  if (
+    command === "up" ||
+    command === "down" ||
+    command === "left" ||
+    command === "right"
+  ) {
+    sendMessageToClient(command);
+  } else if (command === "reset") {
+    sendMessageToClient(command);
+  }
+});
+
+function sendMessageToClient(message) {
+  const form = createDegreesModal();
+  if (!form) {
+    console.error("Не удалось создать форму добавления");
+    return;
+  }
+  showModal();
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    $.ajax({
+      url: "/send_message/",
+      type: "POST",
+      data: { message: message + " " + data.degrees },
+      success: function(response) {
+        alert("Сообщение отправлено: " + message + " " + data.degrees);
+      },
+      error: function() {
+        alert("Ошибка при отправке сообщения");
+      },
+    });
+  });
+};
+
+function createDegreesModal() {
+  let modalWrapper = document.getElementById("modalWrapper");
+  if (modalWrapper) {
+    modalWrapper.remove();
+  }
+  modalWrapper = document.createElement("div");
+  modalWrapper.id = "modalWrapper";
+  document.body.appendChild(modalWrapper);
+
+  let formContainer = document.createElement("div");
+  formContainer.id = "addModal";
+
+  const form = document.createElement("form");
+  form.id = "addForm";
+
+  const label = document.createElement("label");
+  label.htmlFor = `addDegrees`;
+  label.textContent = `Градусы`;
+
+  const input = document.createElement("input");
+  input.type = "numeric";
+  input.id = `addDegrees`;
+  input.name = 'degrees';
+  form.appendChild(label);
+  form.appendChild(input);
+  form.appendChild(document.createElement("br"));
+
+  const submitButton = document.createElement("button");
+  submitButton.setAttribute("class", "button-glass");
+  submitButton.type = "submit";
+  submitButton.textContent = "Сохранить изменения";
+  form.appendChild(submitButton);
+
+  const cancelButton = document.createElement("button");
+  cancelButton.setAttribute("class", "close-button");
+  cancelButton.type = "button";
+  cancelButton.textContent = "Отмена";
+  cancelButton.onclick = function() {
+    closeModal();
+  };
+  form.appendChild(cancelButton);
+
+  formContainer.appendChild(form);
+  modalWrapper.appendChild(formContainer);
+
+  return form;
+}
+
+function showModal() {
+  const modal = document.getElementById("modalWrapper");
+  if (modal) {
+    modal.style.display = "flex";
+    console.log(modal);
+    setTimeout(() => {
+      modal.classList.add("show");
+    }, 10);
+  }
+}
+
+function closeModal() {
+  const modalWrapper = document.getElementById("modalWrapper");
+  if (modalWrapper) {
+    modalWrapper.classList.remove("show");
+    setTimeout(() => {
+      modalWrapper.style.display = "none";
+    }, 300);
+  }
+}
+
+$(document).ready(function() {
+  $('#refreshData').on('click', function() {
+    var panelId = {{ panel.id }}
+    $.ajax({
+      url: `/get_recent_char/${panelId}/`,
+      method: 'GET',
+      success: function(response) {
+        console.log(response);
+        $('#horizontalPosition').text(response.horizontal_position);
+        $('#verticalPosition').text(response.vertical_position);
+        $('#consumedPower').text(response.consumed_power);
+        $('#generatedPower').text(response.generated_power);
+        $('#lastDate').text(response.date);
+        $('#lastTime').text(response.time);
+        updateChart();
+      },
+      error: function(error) {
+        console.log(error);
+      }
+    });
+  });
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Функция для выполнения AJAX-запроса
+    function getWeatherData() {
+        $.ajax({
+            url: '/get_weather/',
+            method: 'GET',
+            success: function(response) {
+                // Обновляем элементы на странице данными о погоде
+                console.log(response);
+                $('#weatherDescription').text(response.weather[0].description);
+                $('#temperature').text(response.main.temp);
+                $('#windSpeed').text(response.wind.speed);
+                $('#cloudiness').text(response.clouds.all);
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+    }
+
+    // Вызываем функцию для получения данных о погоде при загрузке страницы
+    getWeatherData();
+});
+
+  var generated_power = [];
+  var consumed_power =  [];
+  var allDate = [];
+  var ctx = document.getElementById("powerChart").getContext("2d");
+  
+  var options = {
+    type: "line",
+    data: {
+      labels: ["", "", ""], // Замените на актуальные метки
+      datasets: [
+        {
+          label: "Generated Power",
+          data: generated_power,
+          borderColor: "rgba(75, 192, 192, 1)",
+          backgroundColor: "rgba(75, 192, 192, 0.2)", // Заливка под линией
+          borderWidth: 2,
+          pointRadius: 3, // Размер точек
+          pointHoverRadius: 5, // Размер точек при наведении
+        },
+        {
+          label: "Consumed Power",
+          data: consumed_power,
+          borderColor: "rgba(255, 99, 132, 1)",
+          backgroundColor: "rgba(255, 99, 132, 0.2)", // Заливка под линией
+          borderWidth: 2,
+          pointRadius: 3, // Размер точек
+          pointHoverRadius: 5, // Размер точек при наведении
+        },
+      ],
+    },
+    options:{
+      responsive: true, // Адаптивность графика
+      title: {
+        display: true,
+        text: "Energy Consumption and Generation",
+      },
+      tooltips: {
+        mode: "index",
+        intersect: false,
+      },
+      hover: {
+        mode: "nearest",
+        intersect: true,
+      },
+    scales: {
+  xAxes: [
+    {
+    display: true,
+    scaleLabel: {
+      display: true,
+      labelString: 'Time'
+    }
+  }
+  ],
+  yAxes: [
+    {
+    display: true,
+    scaleLabel: {
+      display: true,
+      labelString: 'Power (kW)'
+    },
+    ticks: {
+      beginAtZero: true
+    }
+    // Другие настройки yAxes
+  }]
+},
+      animation: {
+        duration: 1000, // Длительность анимации
+      },
+      legend: {
+        position: "top", // Позиция легенды
+      },
+    },
+  };
+  
+  var myChart = new Chart(ctx, options);
+
+  document
+    .addEventListener('DOMContentLoaded', function () {     
+          updateChart();
+    });
+
+  function updateChart(data) {
+  var selectedPanel = {{panel.id|safe}};
+  var selectedDate = '{{ char.date|safe }}';
+
+  fetch("/get_characteristics_by_date/" + selectedPanel+'/'+String(selectedDate))
+  .then((response) => response.json())
+  .then((data) => {
+         
+  console.log("В функции обновления графика:");
+  console.log(data);
+
+
+ // Обновляем данные графика
+    if (Array.isArray(data.generated_power) && Array.isArray(data.consumed_power)) {
+        myChart.data.datasets[0].data = data.generated_power;
+        myChart.data.datasets[1].data = data.consumed_power;
+
+        // Устанавливаем метки для оси X
+        myChart.data.labels = data.time;
+
+        // Обновляем график
+        myChart.update();
+  } else {
+    console.error("Неверный формат данных для графика");
+  }
+  }
+  )}
+
+</script>
+  {% endblock %}
+</div>

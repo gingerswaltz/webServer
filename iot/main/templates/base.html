@@ -8,8 +8,10 @@
     
     <link rel="stylesheet" href="{% static 'css/aside.css'%}">
     <link rel="stylesheet" href="{% static 'css/socket.css'%}">
+    <link rel="stylesheet" href="{% static 'css/panel_detail.css'%}">
     <link href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" >
 </head>
 <body class="{% if night_mode == 'on' %}dark{% else %}{% endif %}">
     <nav class="sidebar close">
@@ -64,7 +66,7 @@
                     </div>
                     <div class="menu-text text">
                         <span class="text" style="margin-right: 10px">
-                        Ночной режим</text>
+                        Ночной режим
                     </div>
                     <div class="toggle-switch text">
                          <span class="switch"></span>

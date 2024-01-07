@@ -1,0 +1,128 @@
+
+.panel-info {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-around;
+    flex: 1;
+    padding: 10px;
+}
+
+.panel-block {
+    width: 30%; /* Или другой подходящий размер */
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Небольшая тень для визуального выделения */
+    margin: 10px;
+    border-radius: 5px; /* Скругленные углы */
+    background-color: #aecae6;
+}
+
+
+
+.panel-block h3 {
+    color: #333; /* Цвет заголовка */
+    margin-bottom: 5px;
+}
+
+.panel-block p {
+    color: #666; /* Цвет текста */
+}
+
+
+.panel-line {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px; /* Отступ между линиями */
+}
+
+
+
+/* Стили для ночного режима */
+body.dark .panel-block {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    /* другие стили для ночного режима */
+}
+
+
+
+body.dark .panel-block h3 {
+    color: #f0e3e3; /* Цвет заголовка */
+    margin-bottom: 5px;
+}
+
+body.dark .panel-block p {
+    color: #f7f7f7; /* Цвет текста */
+}
+
+.control-buttons {
+    display: flex;
+    justify-content: center; /* Центрирует кнопки внутри контейнера */
+    gap: 10px; /* Расстояние между кнопками */
+    flex-direction: column;
+    width: 50%;
+  }
+
+  div#modalWrapper {
+    position: fixed; /* Фиксированное позиционирование */
+    top: 0;
+    left: 0;
+    width: 100%; /* Занимает всю ширину экрана */
+    height: 100%; /* Занимает всю высоту экрана */
+    background-color: rgba(0, 0, 0, 0.5); /* Светло-серый затемненный фон */
+    display: flex;
+    justify-content: center; /* Горизонтальное центрирование */
+    align-items: center; /* Вертикальное центрирование */
+    z-index: 999; /* Убедитесь, что оболочка будет ниже модального окна */
+    display: none; /* Изначально скрыто */
+    opacity: 0; /* Начальная прозрачность */
+    transition: opacity 0.3s ease; /* Плавное изменение прозрачности */
+
+}
+
+
+div#modalWrapper.show {
+    opacity: 1; /* Полная видимость при активации */
+    
+}
+
+/* Стили для модального окна */
+#addModal {
+    width: 300px; /* Или другой подходящий размер */
+    background: #333; /* Белый фон для лучшей видимости */
+    border-radius: 10px; /* Скругленные края */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Мягкая тень */
+    padding: 20px;
+    z-index: 1000; /* Убедитесь, что модальное окно будет поверх оболочки */
+}
+
+/* Стили для формы внутри модального окна */
+#addForm {
+    display: flex;
+    flex-direction: column;
+}
+
+#addForm label {
+    margin-bottom: 5px;
+    color: #fbf8f8; /* Цвет текста для лучшей видимости */
+}
+
+#addForm input[type="text"] {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    background-color: white; /* Белый фон для лучшей видимости */
+    color: #333; /* Цвет текста для лучшей видимости */
+    border-radius: 5px; /* Скругленные углы */
+}
+
+#addForm button {
+    padding: 10px 20px;
+    border: none;
+    background-color: #007bff; /* Голубой фон */
+    color: white;
+    border-radius: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Плавное изменение фона и тени */
+    align-self: center;
+}

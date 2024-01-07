@@ -1,91 +1,77 @@
-{% extends "base.html" %} 
-{% load static %}
-
-{% block content %}
+{% extends "base.html" %} {% load static %} {% block content %}
 <div class="container">
-    <h2>Управление солнечными установками</h2>
-    
-    <!-- Основной контейнер для memo и списка клиентов -->
-    <div class="content-container">
-        <!-- Контейнер для memo и кнопки Очистить -->
-        <div class="memo-container">
-            <textarea id="memo" readonly placeholder="Здесь будет информация.."></textarea>
-            <button id="clearMemo">Очистить</button>
-        </div>
-        
-        <!-- Контейнер для списка клиентов и управляющих элементов -->
-        <div class="client-list-container">
-            <button id="getClients" style="">Получить список клиентов</button>
-            <div class="client-list" id="clientList"></div> <!-- Контейнер для списка клиентов -->
-            <div id="response"></div>
-        </div>
-    </div>
-    
-    <!-- Контейнер для управляющих кнопок -->
-    <div class="control-buttons">
-        <button class="control-button" id="btnUp">Up</button>
-        <button class="control-button" id="btnDown">Down</button>
-        <button class="control-button" id="btnLeft">Left</button>
-        <button class="control-button" id="btnRight">Right</button>
-        <button class="control-button" id="btnReset">Reset</button>
+  <h2>Управление солнечными установками</h2>
+
+  <!-- Основной контейнер для memo и списка клиентов -->
+  <div class="content-container">
+    <!-- Контейнер для memo и кнопки Очистить -->
+    <div class="memo-container">
+      <textarea
+        id="memo"
+        readonly
+        placeholder="Здесь будет информация.."
+      ></textarea>
+      <button id="clearMemo">Очистить</button>
     </div>
 
-    <div id="valueInputContainer" style="display: none;">
-                <input type="number" id="valueInput" placeholder="Введите значение">
-                <button id="sendValue">Отправить</button>
-                <button id="cancelValue">Назад</button>
+    <!-- Контейнер для списка клиентов и управляющих элементов -->
+    <div class="client-list-container">
+      <button id="getClients" style="">Получить список клиентов</button>
+      <div class="client-list" id="clientList"></div>
+      <!-- Контейнер для списка клиентов -->
+      <div id="response"></div>
     </div>
-</div>
+  </div>
 
-    
 
 <script>
-    
-
-    $(document).ready(function() {
+  $(document).ready(function () {
     // Инициализация кнопок как неактивных
-    $('.control-button').prop('disabled', true);
-});
+    $(".control-button").prop("disabled", true);
+  });
 
+  $(document).ready(function () {
+    loadMemoContent();
+  });
 
-     $(document).ready(function() {
-        loadMemoContent();
-    });
-    
-    $('#clearMemo').click(function() {
+  $("#clearMemo").click(function () {
     clearMemoContent();
-});
+  });
 
-function clearMemoContent() {
-    $("#memo").val(''); // Очищаем текстовое поле
+  function clearMemoContent() {
+    $("#memo").val(""); // Очищаем текстовое поле
     localStorage.removeItem("memoContent"); // Удаляем данные из локального хранилища
-}
-    
-    var currentCommand = '';
-    $('.control-button').click(function() {
+  }
+
+  var currentCommand = "";
+  $(".control-button").click(function () {
     var command = $(this).text().toLowerCase();
     currentCommand = command;
-    if (command === 'up' || command === 'down' || command === 'left' || command === 'right') {
-        $('#valueInputContainer').show();
-    } else if (command === 'reset') {
-        sendMessageToClient(command);
+    if (
+      command === "up" ||
+      command === "down" ||
+      command === "left" ||
+      command === "right"
+    ) {
+      $("#valueInputContainer").show();
+    } else if (command === "reset") {
+      sendMessageToClient(command);
     }
-});
+  });
 
-$('#sendValue').click(function() {
-    var value = $('#valueInput').val();
+  $("#sendValue").click(function () {
+    var value = $("#valueInput").val();
     sendMessageToClient(currentCommand + " " + value);
-    $('#valueInputContainer').hide();
-    $('#valueInput').val(''); // Очистка поля после отправки
-});
+    $("#valueInputContainer").hide();
+    $("#valueInput").val(""); // Очистка поля после отправки
+  });
 
-    $('#cancelValue').click(function() {
-    $('#valueInputContainer').hide();
-    $('#valueInput').val(''); // Очистка поля при отмене
-});
+  $("#cancelValue").click(function () {
+    $("#valueInputContainer").hide();
+    $("#valueInput").val(""); // Очистка поля при отмене
+  });
 
-
-function appendToMemo(text) {
+  function appendToMemo(text) {
     var $memo = $("#memo");
     var timestamp = new Date().toLocaleString(); // Получаем текущую дату и время
     var updatedText = $memo.val() + timestamp + " - " + text + "\n"; // Добавляем новое сообщение с временной меткой в конец
@@ -93,117 +79,119 @@ function appendToMemo(text) {
     trimMemoContent();
     localStorage.setItem("memoContent", updatedText); // Сохраняем обновленный текст в локальное хранилище
     $memo.scrollTop($memo[0].scrollHeight); // Прокручиваем вниз до последнего сообщения
-}
+  }
 
+  function trimMemoContent() {
+    var maxLines = 300;
+    var $memo = $("#memo");
+    var lines = $memo.val().split("\n");
 
-
-function trimMemoContent() {
-        var maxLines = 300;
-        var $memo = $("#memo");
-        var lines = $memo.val().split("\n");
-
-        if (lines.length > maxLines) {
-            lines = lines.slice(lines.length - maxLines);
-            var trimmedContent = lines.join("\n");
-            $memo.val(trimmedContent);
-            localStorage.setItem("memoContent", trimmedContent);
-        }
+    if (lines.length > maxLines) {
+      lines = lines.slice(lines.length - maxLines);
+      var trimmedContent = lines.join("\n");
+      $memo.val(trimmedContent);
+      localStorage.setItem("memoContent", trimmedContent);
     }
+  }
 
-
-function loadMemoContent() {
-        var savedContent = localStorage.getItem("memoContent");
-        if (savedContent) {
-            $("#memo").val(savedContent);
-        }
+  function loadMemoContent() {
+    var savedContent = localStorage.getItem("memoContent");
+    if (savedContent) {
+      $("#memo").val(savedContent);
     }
+  }
 
-function populateClientsList(clientsObj) {
-    var $clientList = $('#clientList');
+  function populateClientsList(clientsObj) {
+    var $clientList = $("#clientList");
     $clientList.empty(); // Очищаем список, если в нем уже что-то есть
 
-    Object.entries(clientsObj).forEach(function([clientId, clientDetails]) {
-        var $item = $('<div class="client-list-item">');
-        var $button = $('<button class="client-button">').text(clientId).click(function() {
-            // При нажатии кнопки устанавливаем активного клиента
-            setActiveClient(clientId);
+    Object.entries(clientsObj).forEach(function ([clientId, clientDetails]) {
+      var $item = $('<div class="client-list-item">');
+      var $button = $('<button class="client-button">')
+        .text(clientId)
+        .click(function () {
+          // При нажатии кнопки устанавливаем активного клиента
+          setActiveClient(clientId);
         });
-        $item.append($button);
-        $clientList.append($item);
+      $item.append($button);
+      $clientList.append($item);
     });
-}
+  }
 
-$("#getClients").click(function() {
+  $("#getClients").click(function () {
     $.ajax({
-        url: '/get_clients/',
-        type: 'GET',
-        success: function(response) {
-            var clients;
-            try {
-                clients = typeof response === 'string' ? JSON.parse(response) : response;
-            } catch (error) {
-                console.error("Ошибка при разборе ответа сервера:", error);
-                appendToMemo("Ошибка при разборе ответа сервера: " + error.message);
-                return;
-            }
-            
-            if(typeof clients === 'object' && clients !== null) {
-                populateClientsList(clients); // Добавляем клиентов в список
-                var formattedResponse = JSON.stringify(clients, null, 4);
-            } else {
-                console.error("Ответ сервера не является объектом:", clients);
-                appendToMemo("Ответ сервера не является объектом: " + JSON.stringify(clients));
-            }
-        },
-        error: function() {
-            appendToMemo("Ошибка при получении списка клиентов");
+      url: "/get_clients/",
+      type: "GET",
+      success: function (response) {
+        var clients;
+        try {
+          clients =
+            typeof response === "string" ? JSON.parse(response) : response;
+        } catch (error) {
+          console.error("Ошибка при разборе ответа сервера:", error);
+          appendToMemo("Ошибка при разборе ответа сервера: " + error.message);
+          return;
         }
-    });
-});
 
-function setActiveClient(clientId) {    
+        if (typeof clients === "object" && clients !== null) {
+          populateClientsList(clients); // Добавляем клиентов в список
+          var formattedResponse = JSON.stringify(clients, null, 4);
+        } else {
+          console.error("Ответ сервера не является объектом:", clients);
+          appendToMemo(
+            "Ответ сервера не является объектом: " + JSON.stringify(clients)
+          );
+        }
+      },
+      error: function () {
+        appendToMemo("Ошибка при получении списка клиентов");
+      },
+    });
+  });
+
+  function setActiveClient(clientId) {
     $.ajax({
-        url: '/set_active_client/',
-        type: 'POST',
-        data: { "client_id": clientId },
-        success: function(response) {
-            appendToMemo("Активный клиент установлен: " + clientId);
+      url: "/set_active_client/",
+      type: "POST",
+      data: { client_id: clientId },
+      success: function (response) {
+        appendToMemo("Активный клиент установлен: " + clientId);
         // После успешной установки клиента активируйте кнопки
-        $('.control-button').prop('disabled', false);
-        },
-        error: function() {
-            appendToMemo("Ошибка при установке активного клиента");
-        }
+        $(".control-button").prop("disabled", false);
+      },
+      error: function () {
+        appendToMemo("Ошибка при установке активного клиента");
+      },
     });
-}
+  }
 
-function sendMessageToClient(message) {
+  function sendMessageToClient(message) {
     $.ajax({
-        url: '/send_message/',
-        type: 'POST',
-        data: { "message": message },
-        success: function(response) {
-            appendToMemo("Сообщение отправлено: " + message);
-        },
-        error: function() {
-            appendToMemo("Ошибка при отправке сообщения");
-        }
+      url: "/send_message/",
+      type: "POST",
+      data: { message: message },
+      success: function (response) {
+        appendToMemo("Сообщение отправлено: " + message);
+      },
+      error: function () {
+        appendToMemo("Ошибка при отправке сообщения");
+      },
     });
-}
+  }
 
-$("#sendMessage").click(function() {
-        var message = $("#message").val();
-        $.ajax({
-                url: '/send_message/',
-                type: 'POST',
-                data: { "message": message },
-                success: function(response) {
-                    appendToMemo(response.message); // Выводим в Memo
-                },
-                error: function() {
-                    appendToMemo("Ошибка при отправке сообщения");
-                }
-            });
-        });
+  $("#sendMessage").click(function () {
+    var message = $("#message").val();
+    $.ajax({
+      url: "/send_message/",
+      type: "POST",
+      data: { message: message },
+      success: function (response) {
+        appendToMemo(response.message); // Выводим в Memo
+      },
+      error: function () {
+        appendToMemo("Ошибка при отправке сообщения");
+      },
+    });
+  });
 </script>
 {% endblock %}

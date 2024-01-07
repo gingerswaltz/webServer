@@ -1,7 +1,105 @@
-{% extends "base.html" %}
-
+{% extends "base.html" %} 
 {% block title %}Управление панелями{% endblock %}
 
-{% block content %}
+{%block content %}
+<div class="table-container">
+  <table class="content-table">
+    <thead>
+      <tr>
+        <th>Номер установки</th>
+        <th>IP адрес<i class="bx bx-chevron-down table-icon"></i></th>
+        <th>Порт<i class="bx bx-chevron-down table-icon"></i></th>
+        <th>Состояние<i class="bx bx-chevron-down table-icon"></i></th>
+        <th>Управление</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for panel in panels %}
+      <tr>
+        <td>{{ panel.id }}</td>
+        <td>{{ panel.ip_address }}</td>
+        <td>{{ panel.port }}</td>
+       <td style="{% if panel.id|stringformat:"s" in connected_clients %}background-color: #269926;{% else %}background-color: #ffcccc;{% endif %}"|safe>
 
-{% endblock %}
+        <td>
+           <button onclick="location.href='panel_detail?id={{ panel.id }}'">Управлять</button>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4">Нет данных</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  let websocket;
+
+  function connectWebSocket() {
+    // Подключение к WebSocket
+    websocket = new WebSocket('ws://' + window.location.host + '/ws/client-status/');
+
+    websocket.onopen = function() {
+      console.log("WebSocket connection opened");
+    };
+
+    websocket.onerror = function() {
+      console.log("WebSocket error, attempting to reconnect...");
+      websocket.close();
+      setTimeout(connectWebSocket, 3000); // Переподключение через 3 секунды
+    };
+
+    websocket.onclose = function(event) {
+      if (!event.wasClean) {
+        console.log("WebSocket connection closed unexpectedly. Reconnecting...");
+        setTimeout(connectWebSocket, 3000); // Переподключение через 3 секунды
+      }
+    };
+
+    websocket.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      updateTable(data);
+    };
+  }
+
+  function updateTable(data) {
+    if (!data || !data.client_id || !data.header) {
+      console.error("Invalid data received");
+      return;
+    }
+    console.log(data);
+    const rows = document.querySelectorAll(".content-table tbody tr");
+    rows.forEach(row => {
+      if (row.cells[0].textContent === data.client_id.toString()) {
+        const ipCell = row.cells[1];
+        const portCell = row.cells[2];
+        const statusCell = row.cells[3];
+        
+        ipCell.textContent=data.address.toString();
+        portCell.textContent=data.port.toString();
+        switch(data.header) {
+          case "connect":
+             statusCell.style.backgroundColor = "#269926"; // Устанавливаем зеленый цвет
+            break;
+          case "disconnect":
+            statusCell.style.backgroundColor = "#ffcccc"; // Устанавливаем красный цвет
+            break;
+          default:
+            console.error("Unknown header type");
+        }
+      }
+    });
+  }
+
+  connectWebSocket();
+});
+</script>
+
+</div>
+
+  
+  {% endblock %}
+</div>

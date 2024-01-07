@@ -1,179 +1,177 @@
-textarea#memo, input#message {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+textarea#memo,
+input#message {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    margin-bottom: 10px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  margin-bottom: 10px;
 }
 
 button:hover {
-    background-color: #0056b3;
+  background-color: #0056b3;
 }
 
 .container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
 .client-list {
-    margin-bottom: 20px;
-    padding-left: 0; /* Устанавливаем padding-left равным 0, чтобы выровняться по левому краю */
+  margin-bottom: 20px;
+  padding-left: 0; /* Устанавливаем padding-left равным 0, чтобы выровняться по левому краю */
 }
 
 .client-list-item {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start; /* Выравнивание элементов по левому краю */
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    margin-bottom: 5px;
-    padding: 10px; /* Отступ внутри .client-list-item */
-    width: fit-content; /* Ширина в соответствии с содержимым */
-    margin-left: 20px; /* Устанавливаем такой же отступ слева, как и у .container */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* Выравнивание элементов по левому краю */
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  padding: 10px; /* Отступ внутри .client-list-item */
+  width: fit-content; /* Ширина в соответствии с содержимым */
+  margin-left: 20px; /* Устанавливаем такой же отступ слева, как и у .container */
 }
 
 .client-button {
-    padding: 10px 15px; /* Адаптируйте отступы по вашему дизайну */
-    border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    margin-bottom: 10px;
-    width: auto; /* Позволяет кнопке быть шириной содержимого плюс отступы */
-    margin: 0; /* Убираем внешние отступы, если они не нужны */
+  padding: 10px 15px; /* Адаптируйте отступы по вашему дизайну */
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  margin-bottom: 10px;
+  width: auto; /* Позволяет кнопке быть шириной содержимого плюс отступы */
+  margin: 0; /* Убираем внешние отступы, если они не нужны */
 }
 
 .client-list-item label {
-    margin: 0;
+  margin: 0;
 }
 
 button:active {
-    transform: scale(0.98);
+  transform: scale(0.98);
 }
 
 #response {
-    margin-top: 20px;
-    padding: 10px;
-    border-radius: 5px;
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 5px;
 }
 
 .loading-spinner {
-    display: none;
+  display: none;
 }
 
 h2 {
-    color: #ccc;
-    font-size: 24px;
-    font-weight: bold;
-    text-align: center;
-    margin-top: 20px;
-    margin-bottom: 20px;
+  color: #ccc;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 .control-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
 .control-button {
-    margin-right: 10px;
+  margin-right: 10px;
 }
 
 #valueInputContainer {
-    width: 100%;
+  width: 100%;
 }
 
 #sendValue {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 
 #cancelValue {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 
 @media (max-width: 768px) {
-    .container {
-        padding: 15px;
-    }
+  .container {
+    padding: 15px;
+  }
 
-    button, textarea#memo, input#message {
-        width: 100%;
-        margin-bottom: 10px;
-        margin-top: 10px;
-    }
+  button,
+  textarea#memo,
+  input#message {
+    width: 100%;
+    margin-bottom: 10px;
+    margin-top: 10px;
+  }
 
-    .client-button {
-        width: 100%; /* Кнопки будут на всю ширину в мобильном виде */
-    }
+  .client-button {
+    width: 100%; /* Кнопки будут на всю ширину в мобильном виде */
+  }
 }
 
 .content-container {
-    display: flex;
-    margin-bottom: 20px; /* Добавляет отступ между основными контейнерами */
+  display: flex;
+  margin-bottom: 20px; /* Добавляет отступ между основными контейнерами */
 }
 
 .memo-container {
-    flex: 1; /* Занимает доступное пространство и устанавливает ширину на 50%, если нет других свойств */
-    margin-right: 20px; /* Отступ справа от memo */
+  flex: 1; /* Занимает доступное пространство и устанавливает ширину на 50%, если нет других свойств */
+  margin-right: 20px; /* Отступ справа от memo */
 }
 
 #memo {
-    width: 100%; /* Полная ширина в пределах memo-container */
-    height: 300px; /* Вы можете установить высоту по своему усмотрению */
-    margin-bottom: 10px; /* Отступ снизу от textarea */
-    border: 2px solid #000;
+  width: 100%; /* Полная ширина в пределах memo-container */
+  height: 300px; /* Вы можете установить высоту по своему усмотрению */
+  margin-bottom: 10px; /* Отступ снизу от textarea */
+  border: 2px solid #000;
 }
-
 
 .client-list {
-    flex-grow: 1; /* Позволяет client-list занимать все доступное пространство */
-    overflow-y: auto; /* Добавляет прокрутку при необходимости */
-    margin-bottom: 10px; /* Отступ снизу от списка клиентов */
-    height: calc(300px - 40px - 20px * 2); /* Высота за вычетом кнопки и padding сверху и снизу */
-    overflow-y: auto;
+  flex-grow: 1; /* Позволяет client-list занимать все доступное пространство */
+  overflow-y: auto; /* Добавляет прокрутку при необходимости */
+  margin-bottom: 10px; /* Отступ снизу от списка клиентов */
+  height: calc(
+    300px - 40px - 20px * 2
+  ); /* Высота за вычетом кнопки и padding сверху и снизу */
+  overflow-y: auto;
 }
 
-.control-buttons {
-    display: flex;
-    justify-content: center; /* Центрирует кнопки внутри контейнера */
-    gap: 10px; /* Расстояние между кнопками */
-}
 
 .control-button {
-    flex: 1; /* Кнопки будут занимать равное пространство и равномерно распределены */
-    min-width: 50px; /* Минимальная ширина для каждой кнопки */
+  flex: 1; /* Кнопки будут занимать равное пространство и равномерно распределены */
+  min-width: 50px; /* Минимальная ширина для каждой кнопки */
 }
 
 .control-button:disabled {
-    background-color: #cccccc;
-    color: #666666;
-    cursor: not-allowed;
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
 }
 
-
 .client-list-container {
-    border: 2px solid #fff; /* черная рамка */
-    height: 300px; /* высота равная высоте memo */
-    overflow-y: auto; /* прокрутка по вертикали если содержимое не влезает */
-    padding: 10px; /* небольшой внутренний отступ */
+  border: 2px solid #fff; /* черная рамка */
+  height: 300px; /* высота равная высоте memo */
+  overflow-y: auto; /* прокрутка по вертикали если содержимое не влезает */
+  padding: 10px; /* небольшой внутренний отступ */
 }
 
 .client-button {
-    display: block; /* блочное отображение, чтобы кнопки были друг под другом */
-    margin-bottom: 5px; /* отступ между кнопками */
-    width: calc(100% - 20px); /* ширина за вычетом отступов */
-    /* дополнительные стили кнопок */
+  display: block; /* блочное отображение, чтобы кнопки были друг под другом */
+  margin-bottom: 5px; /* отступ между кнопками */
+  width: calc(100% - 20px); /* ширина за вычетом отступов */
+  /* дополнительные стили кнопок */
 }
