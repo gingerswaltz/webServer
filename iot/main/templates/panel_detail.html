@@ -3,10 +3,10 @@
 <div class="panel-line">
   <div class="panel-info">
     <div class="panel-block">
-      <h3>ID панели</h3>
-      <p>{{ panel.id }}</p>
-      <p>{{ panel.ip_address }}</p>
-      <p>{{ panel.port }}</p>
+      <h3>Панель</h3>
+      <p><strong>Номер: </strong>{{ panel.id }}</p>
+      <p><strong>Адрес в сети:</strong> {{ panel.ip_address }}</p>
+      <p><strong>Порт:</strong> {{ panel.port }}</p>
     </div>
     <div class="panel-block">
       <h3>
@@ -54,6 +54,13 @@
 </div>
 </div>
 
+
+<div class="panel-line">
+<div class="panel-block" style="width: 100%">
+      <h3>График за {{char.date}}</h3>
+      <canvas id="powerChart"></canvas>
+    </div>
+</div>
 <div class="panel-line">
   <div class="panel-info">
     <div class="panel-block">
@@ -70,15 +77,12 @@
         <button class="control-button" id="btnReset">Reset</button>
       </div>
     </div>
+    
     <div class="panel-block">
-      <h3>График за {{char.date}}</h3>
-      <canvas id="powerChart" width="400" height="200"></canvas>
-    </div>
-    <div class="panel-block">
-      <h3>Крико</h3>
+      <h3>Ответ на команды</h3>
       <p></p>
     </div>
-  </div>
+
 
 
 
@@ -373,6 +377,37 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   )}
 
+
+
+function createChartModal() {
+  let modalWrapper = document.getElementById("modalWrapper");
+  if (modalWrapper) {
+    modalWrapper.remove();
+  }
+
+  modalWrapper = document.createElement("div");
+  modalWrapper.id = "modalWrapper";
+  const form = document.createElement("form");
+  form.id = "chartForm";
+
+  let formContainer = document.createElement("div");
+  formContainer.id = "chartModal";
+  
+  const cancelButton = document.createElement("button");
+  cancelButton.setAttribute("class", "close-button");
+  cancelButton.type = "button";
+  cancelButton.textContent = "Отмена";
+  cancelButton.onclick = function() {
+    closeModal();
+  };
+  form.appendChild(cancelButton);
+
+  form.appendChild(powerChart);
+
+  formContainer.appendChild(form);
+  modalWrapper.appendChild(formContainer);
+  document.body.appendChild(modalWrapper);
+}
 </script>
   {% endblock %}
 </div>

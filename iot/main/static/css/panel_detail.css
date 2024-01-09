@@ -126,3 +126,60 @@ div#modalWrapper.show {
     transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Плавное изменение фона и тени */
     align-self: center;
 }
+
+
+/* Стили для модального окна */
+#chartModal {
+    width: 100%; /* Или другой подходящий размер */
+    height: 100%;
+    background: #333; /* Белый фон для лучшей видимости */
+    border-radius: 10px; /* Скругленные края */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Мягкая тень */
+    padding: 20px;
+    z-index: 1000; /* Убедитесь, что модальное окно будет поверх оболочки */
+}
+
+/* Стили для формы внутри модального окна */
+#chartForm {
+    display: flex;
+    flex-direction: column;
+}
+
+#chartForm label {
+    margin-bottom: 5px;
+    color: #fbf8f8; /* Цвет текста для лучшей видимости */
+}
+
+#chartForm input[type="text"] {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    background-color: white; /* Белый фон для лучшей видимости */
+    color: #333; /* Цвет текста для лучшей видимости */
+    border-radius: 5px; /* Скругленные углы */
+}
+
+#chartForm button {
+    padding: 10px 20px;
+    border: none;
+    background-color: #007bff; /* Голубой фон */
+    color: white;
+    border-radius: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Плавное изменение фона и тени */
+    align-self: center;
+}
+
+#powerChart {
+    width: 100%;
+    height: 100%;
+    display: block;
+    /* Другие стили */
+}
+
+
+.canvas  {
+    width: 100%;
+    height: 100%;
+   }
