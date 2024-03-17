@@ -181,8 +181,8 @@ document.addEventListener('DOMContentLoaded', function() {
   document
   .getElementById("month")
   .addEventListener("click", function () {
-    var dateList = allDate;
-    var todayDate = new Date();
+    var dateList = allDate; // Получаем список дат
+    var todayDate = new Date(); // Получаем текущую дату
     var filteredList = dateList.filter(function(dateString) {
       // Преобразуем строку даты в объект Date
       var date = new Date(dateString);
@@ -194,8 +194,10 @@ document.addEventListener('DOMContentLoaded', function() {
       return monthsDifference <= 1;
     });
 
+    // Обновляем метки на графике с отфильтрованными датами
     myChart.data.labels = filteredList;
 
+    // Обновляем график
     myChart.update();
   });
 

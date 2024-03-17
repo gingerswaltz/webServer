@@ -14,7 +14,9 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" >
 </head>
 <body class="{% if night_mode == 'on' %}dark{% else %}{% endif %}">
+    <!-- Навигационное меню -->
     <nav class="sidebar close">
+        <!-- Шапка навигационного меню -->
         <header>
             <div class="image-text">
                 <span class="image">
@@ -29,6 +31,7 @@
             <i class='bx bx-chevron-right toggle'></i>
         </header>
 
+        <!-- Основное меню -->
         <div class="menu-bar">
             <div class="menu">
                 <ul class="menu-links">
@@ -58,6 +61,7 @@
                     </li>
                 </ul>
             </div>
+            <!-- Переключатель ночного режима -->
             <div class="bottom-content">
                 <li class="mode">
                     <div class="moon-sun">
@@ -78,9 +82,12 @@
         </div>
     </nav>
     
+    <!-- Основное содержимое страницы -->
     <main class="main-content close">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Подключение скриптов -->
     <script src="{% static 'js/main.js' %}"></script>
 </body>
 </html>

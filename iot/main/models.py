@@ -1,6 +1,6 @@
 from django.db import models
 
-
+# Модель для представления солнечных панелей
 class Solar_Panel(models.Model):
     id = models.IntegerField(primary_key=True)  # id установки
     ip_address = models.CharField(max_length=15, default='')  # адрес
@@ -11,12 +11,13 @@ class Solar_Panel(models.Model):
 
 
     class Meta:
-        ordering = ['-id']
+        ordering = ['-id'] # Сортировка по убыванию id при запросах к модели
 
     def __str__(self):
-        return str(self.id)
+        return str(self.id) # Возвращаем строковое представление id установки
 
 
+# Модель для хранения характеристик солнечных панелей
 class Characteristics(models.Model):
     id = models.AutoField(primary_key=True)
     date = models.DateField()
@@ -31,24 +32,25 @@ class Characteristics(models.Model):
     battery = models.FloatField(null=True)  # заряд батареи
 
     solar_panel = models.ForeignKey(
-        Solar_Panel, on_delete=models.RESTRICT, null=True, blank=True)
+        Solar_Panel, on_delete=models.RESTRICT, null=True, blank=True) # Связь с соответствующей солнечной панелью
 
     class Meta:
-        ordering = ['-date', 'time']
+        ordering = ['-date', 'time'] # Сортировка по убыванию даты и возрастанию времени записи
 
     def __str__(self):
-        return str(self.date)
+        return str(self.date) # Возвращаем строковое представление даты характеристики
 
 
+# Модель для хранения заявлений и команд относительно солнечных панелей
 class SolarStatement(models.Model):
-    solar_panel = models.ForeignKey(Solar_Panel, on_delete=models.RESTRICT)
-    id = models.AutoField(primary_key=True)
-    statement = models.TextField()
-    command = models.TextField()
-    date = models.DateTimeField()
+    solar_panel = models.ForeignKey(Solar_Panel, on_delete=models.RESTRICT) # Связь с соответствующей солнечной панелью
+    id = models.AutoField(primary_key=True)  # Уникальный идентификатор заявления
+    statement = models.TextField() # Заявление
+    command = models.TextField() # Команда
+    date = models.DateTimeField() # Дата и время заявления
 
     class Meta:
-        db_table = 'solar_statement'
+        db_table = 'solar_statement' # Имя таблицы в базе данных
 
     def __str__(self):
-        return f"Statement {self.id} from Solar {self.solar_panel}"
+        return f"Statement {self.id} from Solar {self.solar_panel}" # Возвращаем строковое представление заявления и связанной с ним солнечной панели
