@@ -32,7 +32,7 @@ def send_data_to_server(host, port, message):
                     "command": command,
                     "statement": str(bool(round(random.uniform(0, 1)))),
                     "solar_panel_id": installation_number,
-                    "date": datetime.now().strftime("%Y-%m-%d")+datetime.now().strftime("%H:%M")
+                    "date": datetime.now().strftime("%Y-%m-%d")
                 }
                 s.sendall(json.dumps(response_message).encode() + b'\n')
                 print(f'Sent: {response_message}')
